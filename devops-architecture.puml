@@ -1,0 +1,25 @@
+@startuml
+!define RECTANGLE component
+
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontSize 14
+
+actor Developer
+
+Developer --> GitHub : Push code
+component "GitHub" as GitHub
+component "GitHub Actions" as CI
+component "DockerHub\\n(byunghyukmin)" as DockerHub
+component "ArgoCD\\n(GitOps)" as ArgoCD
+component "Kubernetes\\n(minikube)" as K8s
+component "Spring Boot App\\n(/health, /message)" as App
+
+GitHub --> CI : Triggers CI
+CI --> DockerHub : Build & Push Docker Image
+CI --> GitHub : Status Check
+GitHub --> ArgoCD : Manifest Update (yaml)
+ArgoCD --> K8s : Sync Deployment
+K8s --> App : Run Container
+@enduml
