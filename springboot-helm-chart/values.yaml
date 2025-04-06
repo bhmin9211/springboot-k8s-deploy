@@ -1,0 +1,16 @@
+replicaCount: 1
+
+image:
+  repository: byunghyukmin/springboot-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080
+
+readinessProbe:
+  path: /
+  initialDelaySeconds: 5
+  periodSeconds: 5
