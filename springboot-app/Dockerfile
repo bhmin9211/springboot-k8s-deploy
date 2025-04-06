@@ -1,6 +1,5 @@
 FROM openjdk:17-slim AS builder
 
-# Install Gradle
 RUN apt-get update && apt-get install -y wget unzip && \
     wget https://services.gradle.org/distributions/gradle-8.5-bin.zip && \
     unzip gradle-8.5-bin.zip -d /opt && \
@@ -8,20 +7,19 @@ RUN apt-get update && apt-get install -y wget unzip && \
 
 WORKDIR /app
 
-# Copy only necessary files first for cache
+# 최소한의 파일만 복사
 COPY springboot-app/build.gradle /app/
 COPY springboot-app/settings.gradle /app/
-COPY springboot-app/gradle /app/gradle
 
-# Cache dependencies
+# 의존성 캐시 시도 (없어도 실행됨)
 RUN gradle dependencies || true
 
-# Copy entire project and build
+# 전체 복사 및 빌드
 COPY springboot-app /app
 RUN gradle build
 
-# Final runtime image
 FROM openjdk:17-slim
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 CMD ["java", "-jar", "app.jar"]
+
