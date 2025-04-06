@@ -14,7 +14,6 @@ COPY springboot-app/gradle /app/gradle
 COPY springboot-app/build.gradle /app/
 COPY springboot-app/settings.gradle /app/
 COPY springboot-app/gradlew /app/
-COPY springboot-app/gradlew.bat /app/
 
 # 의존성 캐시 생성
 RUN ./gradlew build --dry-run || true
