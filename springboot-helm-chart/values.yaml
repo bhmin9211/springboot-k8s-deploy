@@ -22,3 +22,6 @@ readinessProbe:            # 헬스 체크 설정
 
 resources: {}              # 리소스 제한 설정 가능
 
+ingress:
+  enabled: true
+  host: springboot.local
