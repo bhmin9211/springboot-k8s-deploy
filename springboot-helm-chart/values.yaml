@@ -1,19 +1,24 @@
-replicaCount: 1
-
-image:
+replicaCount: 1            # 배포 수
+image:                     # 도커 이미지 정보
   repository: byunghyukmin/springboot-app
   tag: latest
   pullPolicy: IfNotPresent
 
-service:
+service:                   # 서비스 설정
+  name: springboot-app-service
   type: LoadBalancer
   port: 80
   targetPort: 8080
 
-
-readinessProbe:
-  httpGet:
-    path: /
-    port: 8080
+readinessProbe:            # 헬스 체크 설정
+  enabled: true
+  path: /
+  port: 8080
   initialDelaySeconds: 2
   periodSeconds: 3
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+
+resources: {}              # 리소스 제한 설정 가능
+
