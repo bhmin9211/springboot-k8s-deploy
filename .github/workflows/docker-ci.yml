@@ -43,8 +43,8 @@ jobs:
           sed -i "s/^  tag: .*/  tag: ${{ github.sha }}/" ./springboot-helm-chart/values.yaml
 
           # Configure Git user for GitHub Actions
-          git config user.name "bhmin9211"
-          git config user.email "bhmin9211@gmail.com"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
 
           # Commit and push the updated values.yaml to the repository
           git add ./springboot-helm-chart/values.yaml
