@@ -8,12 +8,12 @@ service:                   # 서비스 설정
   name: springboot-app-service
   type: LoadBalancer
   port: 80
-  targetPort: 8080
+  targetPort: 8081
 
 readinessProbe:            # 헬스 체크 설정
   enabled: true
   path: /
-  port: 8080
+  port: 8081
   initialDelaySeconds: 2
   periodSeconds: 3
   timeoutSeconds: 1
