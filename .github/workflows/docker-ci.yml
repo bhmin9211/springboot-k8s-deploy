@@ -29,7 +29,9 @@ jobs:
           file: ./springboot-app/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: byunghyukmin/springboot-app:latest
+          tags: |
+            byunghyukmin/springboot-app:latest
+            byunghyukmin/springboot-app:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
