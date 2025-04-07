@@ -13,7 +13,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}  # GitHub 인증 토큰 사용
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -39,10 +39,19 @@ jobs:
 
       - name: Update Helm values.yaml with new SHA tag
         run: |
+          # Update the tag in values.yaml with the new GitHub SHA
           sed -i "s/^  tag: .*/  tag: ${{ github.sha }}/" ./springboot-helm-chart/values.yaml
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+
+          # Configure Git user for GitHub Actions
+          git config user.name "bhmin9211"
+          git config user.email "bhmin9211@gmail.com"
+
+          # Commit and push the updated values.yaml to the repository
           git add ./springboot-helm-chart/values.yaml
           git commit -m "ci: update image tag to ${{ github.sha }}"
-          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+
+          # Push the changes to GitHub using GitHub token
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the GitHub token for authentication
 
