@@ -1,109 +1,97 @@
-# 🚀 springboot-k8s-deploy
+# DevOps Portfolio: Spring Boot + Vue 자동 배포 환경 구축
 
-Spring Boot 애플리케이션을 **CI/CD 자동화 파이프라인**으로 구성한 DevOps 포트폴리오입니다.  
-Docker, GitHub Actions, Helm, ArgoCD, Kubernetes(Minikube) 기반으로 배포 전체 흐름을 구축하였습니다.
-
----
-
-## 🛠 기술 스택
-
-| 구분 | 기술 |
-|------|------|
-| 백엔드 | Spring Boot 3.x |
-| 빌드 | Gradle |
-| 컨테이너 | Docker |
-| CI | GitHub Actions |
-| 이미지 저장소 | DockerHub (`byunghyukmin/springboot-app`) |
-| 배포 자동화 | Helm + ArgoCD (GitOps) |
-| 클러스터 | Minikube (macOS + Colima 기반) |
-| 라우팅 | Ingress (`springboot.local`) |
+## 📄 프로젝트 개요
+Spring Boot 백엔드와 Vue 프론트엔드를 기반으로, GitHub Actions, Docker, Helm, Argo CD, Kubernetes를 활용한 CI/CD 자동화 및 GitOps 배포 파이프라인을 구성했습니다.
 
 ---
 
-## ⚙️ 전체 아키텍처
+## 🚀 사용 기술 스택
+- **Backend**: Java 17, Spring Boot
+- **Frontend**: Vue 3, Vite
+- **CI/CD**: GitHub Actions
+- **Containerization**: Docker, DockerHub
+- **Kubernetes**: Minikube (로컬 클러스터)
+- **배포 자동화**: Helm, Argo CD
 
-```plaintext
-GitHub Push
-  ↓
-GitHub Actions → Docker 이미지 빌드 & DockerHub 푸시
-  ↓
-ArgoCD → Git 변경 감지 → 자동 동기화
-  ↓
-Kubernetes → Helm Chart 기반 배포
-  ↓
-Ingress → http://springboot.local 접속
+---
+
+## 🔄 전체 흐름도
+```mermaid
+graph TD
+A[코드 푸시] --> B[GitHub Actions 실행]
+B --> C[Docker Build & Push - :latest, :SHA tag]
+C --> D[Helm values.yaml 이미지 태그 업데이트]
+D --> E[Git Push - tag 변경 반영]
+E --> F[ArgoCD 자동 Sync & 배포]
 ```
 
 ---
 
-## 📁 주요 디렉토리 구조
+## 🏙️ 서비스 아키텍처
+- Spring Boot 앱: `/api/hello` 제공
+- Vue 프론트엔드: API 호출하여 메시지 출력
+- Ingress: `springboot.local` 도메인에서 전체 접근 가능
+- Readiness Probe로 헬스체크
 
-```bash
+---
+
+## 📁 디렉토리 구조 (중요 부분)
+```
 .
-├── .github/workflows/         # GitHub Actions 워크플로우
-│   └── ci.yml
-├── springboot-app/            # Spring Boot + Dockerfile
-├── springboot-helm-chart/     # Helm Chart (deployment, service, ingress 등)
+├── .github/workflows/ci.yml       # GitHub Actions CI 설정
+├── springboot-app/                # Spring Boot 애플리케이션
+├── frontend/                      # Vue 프론트엔드 앱
+├── springboot-helm-chart/        # Helm chart (Spring Boot)
 ├── README.md
 ```
 
 ---
 
-## 🔄 CI/CD 흐름
-
-1. 코드를 `main` 브랜치에 푸시
-2. GitHub Actions가 Docker 이미지 빌드 및 DockerHub에 푸시
-3. ArgoCD가 Git 변경을 감지하여 자동 배포
-4. Kubernetes 클러스터에서 Helm Chart 기반 Pod 배포
-5. readinessProbe를 통해 헬스 체크 수행
-6. Ingress를 통해 로컬 도메인으로 접속
+## 🛠 GitHub Actions 핵심 설정 요약
+- main 브랜치 푸시 시 CI 트리거
+- `byunghyukmin/springboot-app:{latest, SHA}` 이미지 생성
+- SHA 값을 Helm values.yaml 에 반영 후 자동 커밋/푸시
 
 ---
 
-## ✅ 로컬 서비스 확인 (Ingress)
+## ✨ ArgoCD 설정
+- Application 생성: `springboot-helm` 
+- Git 저장소에서 Helm chart path 추적: `/springboot-helm-chart`
+- 자동 Sync & Auto-prune 활성화
 
-1. `/etc/hosts` 파일에 도메인 등록:
+---
 
+## 🌐 접속 방법 (로컬 테스트)
+- `/etc/hosts`에 다음 추가:
 ```
 127.0.0.1 springboot.local
 ```
+- 브라우저 접속: `http://springboot.local`
 
-2. 브라우저 또는 curl 접속:
+---
 
+## 🔧 향후 개선 계획
+- 프론트엔드(Vue) CI/CD 자동화 추가
+- TLS(HTTPS) Ingress 적용
+- HPA, 리소스 제한 설정 강화
+- GitOps 배포로 QA/Prod 분리
+
+---
+
+## 📖 참고 명령어
 ```bash
-curl http://springboot.local/
+kubectl get all
+kubectl describe pod <pod-name>
+kubectl port-forward svc/springboot-service 8080:80
+curl http://localhost:8080
 ```
 
-> 응답 예시: `OK`
-
 ---
 
-## 🛠 Helm 명령어
-
-```bash
-helm install springboot-app ./springboot-helm-chart
-helm upgrade springboot-app ./springboot-helm-chart
-helm uninstall springboot-app
-```
-
----
-
-## 📌 프로젝트 목적
-
-> 이 포트폴리오는 Spring Boot 서비스를 CI/CD 파이프라인과 함께 자동 배포하고,  
-> GitOps 기반의 실무 DevOps 흐름을 연습하기 위한 개인 프로젝트입니다.
-
----
-
-## 🙌 기여자
-
-- Author: [bhmin9211](https://github.com/bhmin9211)
+## 😊 만든 사람
+- GitHub: [bhmin9211](https://github.com/bhmin9211)
 - DockerHub: [byunghyukmin](https://hub.docker.com/u/byunghyukmin)
 
 ---
 
-## 🔍 참고 사항
-
-- ArgoCD는 `syncPolicy: automated` 로 설정되어 있어 Git 변경 시 자동 배포됩니다.
-- readinessProbe는 기본 `/` 경로로 구성되어 있으며, `/actuator/health`로도 쉽게 전환 가능합니다.
-- Ingress는 `springboot.local` 로 설정되어 있으며, 로컬 테스트 시 `/etc/hosts` 등록 필요합니다.
+> 이 프로젝트는 DevOps 자동화를 실무에 가깝게 구성한 개인 포트폴리오입니다. 개선 의견은 언제든 환영합니다 🙌
