@@ -1,7 +1,7 @@
 replicaCount: 1            # 배포 수
 image:                     # 도커 이미지 정보
   repository: byunghyukmin/springboot-app
-  tag: e10b25da6260ab7c37ddfca5a194ed4211d4065b
+  tag: 080c1b4ddc7d6512e0cef72d6e9ac33b305bdc70
   pullPolicy: IfNotPresent
 
 service:                   # 서비스 설정
