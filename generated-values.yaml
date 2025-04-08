@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: byunghyukmin/springboot-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: springboot-app-service
+  type: LoadBalancer
+  port: 80
+  targetPort: 8081
+
+readinessProbe:
+  enabled: true
+  path: /
+  port: 8081
+  initialDelaySeconds: 2
+  periodSeconds: 3
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+
+resources: {}
+
+ingress:
+  enabled: true
+  host: springboot.local

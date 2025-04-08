@@ -1,0 +1,8 @@
+app:
+  name: springboot-app
+  image: byunghyukmin/springboot-app
+  tag: latest
+  port: 8081
+  path: /
+  ingress: springboot.local
+  namespace: default
