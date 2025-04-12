@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'springboot-helm-chart/frontend-values.yaml.yaml'
+      - 'springboot-helm-chart/frontend-values.yaml.'
 
 jobs:
   build-and-push:
