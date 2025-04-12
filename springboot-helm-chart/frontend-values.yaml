@@ -2,7 +2,7 @@
 frontend:
   image:
     repository: byunghyukmin/frontend
-    tag: 3849f6d9452e0db9d0aa04211f8f5bb8ab5a0437
+    tag: 084470872b0636d3022919a9b57ea95f60d3b574
     pullPolicy: IfNotPresent
 
   service:
