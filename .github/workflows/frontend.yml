@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths:
-       - 'frontend/**'
+      - 'frontend/**'
       - '.github/workflows/frontend.yml'
     paths-ignore:
-      - 'springboot-helm-chart/values.yaml'  # 이 파일만 변경 시 CI 무시
+      - 'springboot-helm-chart/values.yaml'
 
 jobs:
   build-and-push:
@@ -45,10 +45,8 @@ jobs:
       - name: Update Helm values-frontend.yaml with new SHA tag (only if changed)
         run: |
           sed -i "s/^  tag: .*/  tag: ${{ github.sha }}/" ./springboot-helm-chart/values-frontend.yaml
-
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-
           if ! git diff --quiet; then
             git add ./springboot-helm-chart/values-frontend.yaml
             git commit -m "ci(frontend): update image tag to ${{ github.sha }}"
