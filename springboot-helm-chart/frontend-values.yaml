@@ -1,0 +1,17 @@
+# values-frontend.yaml (프론트엔드 전용)
+frontend:
+  image:
+    repository: byunghyukmin/frontend
+    tag: latest  # GitHub Actions에서 SHA로 자동 치환됨
+    pullPolicy: IfNotPresent
+
+  service:
+    name: frontend-service
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30081
+
+  ingress:
+    enabled: true
+    host: frontend.local
