@@ -4,13 +4,14 @@ image:                     # 도커 이미지 정보
   tag: 080c1b4ddc7d6512e0cef72d6e9ac33b305bdc70
   pullPolicy: IfNotPresent
 
-service:                   # 서비스 설정
+service:
   name: springboot-app-service
-  type: LoadBalancer
+  type: NodePort
   port: 80
   targetPort: 8081
+  nodePort: 30080  # 외부 노출 포트
 
-readinessProbe:            # 헬스 체크 설정
+readinessProbe:
   enabled: true
   path: /
   port: 8081
@@ -20,8 +21,9 @@ readinessProbe:            # 헬스 체크 설정
   failureThreshold: 3
   successThreshold: 1
 
-resources: {}              # 리소스 제한 설정 가능
+resources: {}
 
 ingress:
   enabled: true
   host: springboot.local
+

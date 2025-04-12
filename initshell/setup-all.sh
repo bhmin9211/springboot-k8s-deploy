@@ -4,7 +4,7 @@ set -e
 echo "🔍 Minikube 상태 확인 중..."
 if ! minikube status | grep -q "host: Running"; then
   echo "🚀 Minikube 시작 중..."
-  minikube start --driver=docker
+  minikube start
 else
   echo "✅ Minikube는 이미 실행 중입니다."
 fi
@@ -25,11 +25,8 @@ else
   echo "🔁 포트포워딩 이미 실행 중"
 fi
 
-echo "📄 values.yaml 생성 중..."
-./generate-values.sh
-
-echo "📦 Helm 배포 중..."
-./deploy-helm.sh
+echo "📄 install-cli 생성 중..."
+./install-cli.sh
 
 echo "🧩 ArgoCD 앱 등록 중..."
 ./register-argocd.sh
