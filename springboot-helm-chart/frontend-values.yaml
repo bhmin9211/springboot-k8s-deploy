@@ -2,7 +2,7 @@
 frontend:
   image:
     repository: byunghyukmin/frontend
-    tag: latest  # GitHub Actions에서 SHA로 자동 치환됨
+    tag: 00d2eae6ea4d4143004e9c0846ff77a20c9067e9
     pullPolicy: IfNotPresent
 
   service:
