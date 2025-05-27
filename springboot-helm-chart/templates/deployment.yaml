@@ -20,7 +20,7 @@ spec:
             - containerPort: {{ .Values.service.targetPort }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.readinessProbe.path }}
+              path: {{ .Values.readinessProbe.path }}api/health/healthcheck
               port: {{ .Values.service.targetPort }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}

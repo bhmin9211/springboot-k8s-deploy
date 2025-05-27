@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.example.demo.config.jpa;
 
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;

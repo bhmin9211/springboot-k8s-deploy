@@ -13,10 +13,9 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot 핵심
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-//    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // MariaDB Driver
     implementation 'org.mariadb.jdbc:mariadb-java-client'

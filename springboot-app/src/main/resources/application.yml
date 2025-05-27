@@ -1,5 +1,7 @@
 server:
   port: 8081
+  servlet:
+    context-path: /api
 spring:
   datasource:
     url: jdbc:mariadb://localhost:3306/k8s_dashboard
@@ -13,5 +15,5 @@ spring:
     show-sql: true                 # SQL 콘솔에 출력
     properties:
       hibernate:
-        physical_naming_strategy: com.example.demo.config.UpperSnakeCaseNamingStrategy
+        physical_naming_strategy: com.example.demo.config.jpa.UpperSnakeCaseNamingStrategy
         format_sql: true           # SQL 예쁘게 출력

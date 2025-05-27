@@ -1,7 +1,7 @@
-package com.example.demo.user.svc;
+package com.example.demo.api.user.svc;
 
-import com.example.demo.user.entity.UserEntity;
-import com.example.demo.user.repo.UserRepository;
+import com.example.demo.api.user.entity.UserEntity;
+import com.example.demo.api.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 //import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
