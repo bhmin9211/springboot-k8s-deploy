@@ -27,4 +27,19 @@ ingress:
   enabled: true
   host: springboot.local
 
+frontend:
+  image:
+    repository: byunghyukmin/frontend
+    tag: b2adc6c589b996201ea7b0c57c13f8091d3f1b39
+    pullPolicy: IfNotPresent
 
+  service:
+    name: frontend-service
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30081
+
+  ingress:
+    enabled: true
+    host: frontend.local
