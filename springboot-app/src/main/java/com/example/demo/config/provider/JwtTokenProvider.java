@@ -65,4 +65,11 @@ public class JwtTokenProvider {
 
         return new UsernamePasswordAuthenticationToken(username, "", List.of());
     }
+
+    public String getUsername(String token) {
+        return Jwts.parser().setSigningKey(secretKey.getBytes())
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
 }

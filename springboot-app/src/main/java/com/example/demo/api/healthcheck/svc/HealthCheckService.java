@@ -12,7 +12,7 @@ public class HealthCheckService {
 
     public boolean healthcheck() {
         try {
-            entityManager.createQuery("select 1").getSingleResult();
+            entityManager.createQuery("SELECT 1").getSingleResult();
             return true;
         } catch (Exception e) {
             return false;
