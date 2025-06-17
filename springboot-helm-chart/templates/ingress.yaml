@@ -16,5 +16,5 @@ spec:
               service:
                 name: {{ .Values.service.name }}
                 port:
-                  number: {{ .Values.service.port }}81
+                  number: {{ .Values.service.port }}
 {{- end }}
