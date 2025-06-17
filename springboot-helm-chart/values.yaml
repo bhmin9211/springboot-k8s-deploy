@@ -26,6 +26,7 @@ resources: {}
 ingress:
   enabled: true
   host: springboot.local
+  targetPort: 8081
 
 frontend:
   image:
