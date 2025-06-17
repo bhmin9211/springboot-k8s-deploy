@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS k8s_dashboard.users (
     );
 
 -- sample user
-INSERT INTO k8s_dashboard.users (username, password, role)
+INSERT INTO k8s_dashboard.USERS (username, password, role)
 VALUES (
            'minbh',
            '$2a$10$wTwIbp4Iaf2ACt6gQyhkB.oCj2yzcZsuzfBr3nBuhwQyAJkS9eNe2',  -- 'test1234'
