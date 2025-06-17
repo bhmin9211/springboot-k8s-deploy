@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - 'springboot-helm-chart/values.yaml'  # 이 파일만 바뀌면 CI 실행 안 함
+      - 'springboot-helm-chart/frontend-values.yaml'
 
 jobs:
   build-and-push:
