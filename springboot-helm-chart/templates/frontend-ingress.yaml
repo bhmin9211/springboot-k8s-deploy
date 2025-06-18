@@ -4,6 +4,7 @@ kind: Ingress
 metadata:
   name: {{ .Values.frontend.service.name }}-ingress
 spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.frontend.ingress.host }}
       http:
