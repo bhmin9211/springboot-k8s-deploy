@@ -1,5 +1,14 @@
-replicaCount: 1            # 배포 수
-image:                     # 도커 이미지 정보
+# ----------------------------------------
+# 공통 설정
+# ----------------------------------------
+replicaCount: 1
+
+resources: {}
+
+# ----------------------------------------
+# SpringBoot 앱 설정
+# ----------------------------------------
+image:
   repository: byunghyukmin/springboot-app
   tag: d0c52d9910e8067b7d1af33cf4261f99c2b94cde
   pullPolicy: IfNotPresent
@@ -9,26 +18,25 @@ service:
   type: NodePort
   port: 80
   targetPort: 8081
-  nodePort: 30080  # 외부 노출 포트
 
 readinessProbe:
   enabled: true
-  path: /
+  path: /api/health/healthcheck
   port: 8081
-  initialDelaySeconds: 2
+  initialDelaySeconds: 5
   periodSeconds: 3
   timeoutSeconds: 1
   failureThreshold: 3
   successThreshold: 1
 
-resources: {}
-
 ingress:
   enabled: true
   host: springboot.local
-  port: 8081
-  ingressClassName: nginx   
+  ingressClassName: nginx
 
+# ----------------------------------------
+# Frontend 앱 설정
+# ----------------------------------------
 frontend:
   image:
     repository: byunghyukmin/frontend
@@ -39,9 +47,9 @@ frontend:
     name: frontend-service
     type: NodePort
     port: 80
-    targetPort: 80
-    nodePort: 30081
+    targetPort: 3000
 
   ingress:
     enabled: true
     host: frontend.local
+    ingressClassName: nginx
