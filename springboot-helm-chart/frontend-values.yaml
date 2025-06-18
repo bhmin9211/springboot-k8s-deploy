@@ -4,14 +4,3 @@ frontend:
     repository: byunghyukmin/frontend
     tag: 3e1a413fbea85c73bd30841d5e4c1a5af6d4414a
     pullPolicy: IfNotPresent
-
-  service:
-    name: frontend-service
-    type: NodePort
-    port: 80
-    targetPort: 80
-    nodePort: 30081
-
-  ingress:
-    enabled: true
-    host: frontend.local
