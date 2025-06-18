@@ -27,6 +27,7 @@ ingress:
   enabled: true
   host: springboot.local
   port: 8081
+  ingressClassName: nginx   
 
 frontend:
   image:
