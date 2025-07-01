@@ -10,7 +10,7 @@ resources: {}
 # ----------------------------------------
 image:
   repository: byunghyukmin/springboot-app
-  tag: d0c52d9910e8067b7d1af33cf4261f99c2b94cde
+  tag: a897aada639607ecc4c33d5589a7494d0443f031
   pullPolicy: IfNotPresent
 
 service:
