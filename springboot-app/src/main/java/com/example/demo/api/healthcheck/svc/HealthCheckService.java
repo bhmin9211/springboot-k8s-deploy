@@ -1,6 +1,6 @@
 package com.example.demo.api.healthcheck.svc;
 
-import jakarta.persistence.EntityManager;
+//import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class HealthCheckService {
 
-    private final EntityManager entityManager;
+    //private final EntityManager entityManager;
 
     public boolean healthcheck() {
         try {

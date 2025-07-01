@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -216,7 +215,7 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
                     .withName(name)
                     .endMetadata()
                     .build();
-            client.namespaces().create(namespace);
+            client.namespaces().resource(namespace).create();
             return true;
         } catch (Exception e) {
             log.error("Namespace {} 생성 중 오류 발생: ", name, e);
