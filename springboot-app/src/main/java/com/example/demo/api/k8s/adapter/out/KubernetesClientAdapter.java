@@ -6,11 +6,13 @@ import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
+import io.fabric8.kubernetes.api.model.StatusDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,7 +69,8 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
     @Override
     public boolean deletePod(String namespace, String name) {
         try {
-            return client.pods().inNamespace(namespace).withName(name).delete();
+            List<StatusDetails> result = client.pods().inNamespace(namespace).withName(name).delete();
+            return result != null && !result.isEmpty();
         } catch (Exception e) {
             log.error("Pod {}/{} 삭제 중 오류 발생: ", namespace, name, e);
             return false;
@@ -184,7 +187,8 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
     @Override
     public boolean deleteService(String namespace, String name) {
         try {
-            return client.services().inNamespace(namespace).withName(name).delete();
+            List<StatusDetails> result = client.services().inNamespace(namespace).withName(name).delete();
+            return result != null && !result.isEmpty();
         } catch (Exception e) {
             log.error("Service {}/{} 삭제 중 오류 발생: ", namespace, name, e);
             return false;
@@ -223,7 +227,8 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
     @Override
     public boolean deleteNamespace(String name) {
         try {
-            return client.namespaces().withName(name).delete();
+            List<StatusDetails> result = client.namespaces().withName(name).delete();
+            return result != null && !result.isEmpty();
         } catch (Exception e) {
             log.error("Namespace {} 삭제 중 오류 발생: ", name, e);
             return false;
@@ -257,11 +262,10 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
                 .namespace(pod.getMetadata().getNamespace())
                 .labels(pod.getMetadata().getLabels())
                 .annotations(pod.getMetadata().getAnnotations())
-                .creationTimestamp(pod.getMetadata().getCreationTimestamp() != null ?
-                        LocalDateTime.ofInstant(pod.getMetadata().getCreationTimestamp().toInstant(), ZoneId.systemDefault()) : null)
+                .creationTimestamp(parseCreationTimestamp(pod.getMetadata().getCreationTimestamp()))
                 .phase(pod.getStatus() != null ? pod.getStatus().getPhase() : null)
                 .podIP(pod.getStatus() != null ? pod.getStatus().getPodIP() : null)
-                .nodeName(pod.getStatus() != null ? pod.getStatus().getNodeName() : null)
+                .nodeName(pod.getStatus() != null ? pod.getStatus().getHostIP() : null)
                 .image(pod.getStatus() != null && pod.getStatus().getContainerStatuses() != null && !pod.getStatus().getContainerStatuses().isEmpty() ?
                         pod.getStatus().getContainerStatuses().get(0).getImage() : null)
                 .ready(pod.getStatus() != null && pod.getStatus().getContainerStatuses() != null && !pod.getStatus().getContainerStatuses().isEmpty() ?
@@ -276,8 +280,7 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
                 .name(node.getMetadata().getName())
                 .labels(node.getMetadata().getLabels())
                 .annotations(node.getMetadata().getAnnotations())
-                .creationTimestamp(node.getMetadata().getCreationTimestamp() != null ?
-                        LocalDateTime.ofInstant(node.getMetadata().getCreationTimestamp().toInstant(), ZoneId.systemDefault()) : null);
+                .creationTimestamp(parseCreationTimestamp(node.getMetadata().getCreationTimestamp()));
         
         if (node.getStatus() != null) {
             builder.version(node.getStatus().getNodeInfo().getKubeletVersion())
@@ -319,8 +322,7 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
                 .namespace(deployment.getMetadata().getNamespace())
                 .labels(deployment.getMetadata().getLabels())
                 .annotations(deployment.getMetadata().getAnnotations())
-                .creationTimestamp(deployment.getMetadata().getCreationTimestamp() != null ?
-                        LocalDateTime.ofInstant(deployment.getMetadata().getCreationTimestamp().toInstant(), ZoneId.systemDefault()) : null);
+                .creationTimestamp(parseCreationTimestamp(deployment.getMetadata().getCreationTimestamp()));
         
         if (deployment.getSpec() != null) {
             builder.replicas(deployment.getSpec().getReplicas())
@@ -347,8 +349,7 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
                 .namespace(service.getMetadata().getNamespace())
                 .labels(service.getMetadata().getLabels())
                 .annotations(service.getMetadata().getAnnotations())
-                .creationTimestamp(service.getMetadata().getCreationTimestamp() != null ?
-                        LocalDateTime.ofInstant(service.getMetadata().getCreationTimestamp().toInstant(), ZoneId.systemDefault()) : null);
+                .creationTimestamp(parseCreationTimestamp(service.getMetadata().getCreationTimestamp()));
         
         if (service.getSpec() != null) {
             builder.type(service.getSpec().getType())
@@ -370,5 +371,19 @@ public class KubernetesClientAdapter implements KubernetesRepositoryPort {
         }
         
         return builder.build();
+    }
+    
+    // 날짜 파싱 헬퍼 메서드
+    private LocalDateTime parseCreationTimestamp(String timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        try {
+            // ISO 8601 형식의 날짜 문자열을 파싱
+            return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_DATE_TIME);
+        } catch (Exception e) {
+            log.warn("날짜 파싱 실패: {}", timestamp, e);
+            return null;
+        }
     }
 } 
