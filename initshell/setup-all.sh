@@ -1,14 +1,5 @@
 #!/bin/bash
 set -e
-
-echo "🔍 Minikube 상태 확인 중..."
-if ! minikube status | grep -q "host: Running"; then
-  echo "🚀 Minikube 시작 중..."
-  minikube start
-else
-  echo "✅ Minikube는 이미 실행 중입니다."
-fi
-
 echo "🔍 ArgoCD 설치 여부 확인 중..."
 if ! kubectl get ns argocd &>/dev/null; then
   echo "📦 ArgoCD 설치 중..."

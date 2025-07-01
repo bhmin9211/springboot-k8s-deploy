@@ -16,7 +16,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-
+    implementation 'io.fabric8:knative-client:7.3.1'
+    
+    // Kubernetes Client
+    implementation 'io.fabric8:kubernetes-client:6.8.1'
+    implementation 'io.fabric8:kubernetes-client-api:6.8.1'
+    
     // MariaDB Driver
     implementation 'org.mariadb.jdbc:mariadb-java-client'
 
