@@ -1,30 +1,128 @@
 <template>
-  <nav class="navbar navbar-expand navbar-light bg-light px-3">
-    <!-- Sidebar Toggle Button -->
-    <button class="btn btn-outline-primary d-md-none me-2" @click="toggleSidebar">
-      ☰
-    </button>
+  <header class="topbar glass-panel">
+    <div class="d-flex align-items-center gap-3">
+      <button class="menu-button d-lg-none" @click="toggleSidebar">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
-    <ul class="nav nav-tabs">
-      <li class="nav-item">
-        <router-link to="/" class="nav-link" active-class="active" exact>메인</router-link>
-      </li>
-      <li class="nav-item">
-        <router-link to="/About" class="nav-link" active-class="active">pod</router-link>
-      </li>
-      <li class="nav-item">
-        <router-link to="/Contact" class="nav-link" active-class="active">deploy</router-link>
-      </li>
-    </ul>
-  </nav>
+      <div>
+        <p class="section-title mb-1">Live Overview</p>
+        <h1 class="topbar-title">{{ pageTitle }}</h1>
+      </div>
+    </div>
+
+    <div class="topbar-status">
+      <div class="status-chip">
+        <span class="status-dot"></span>
+        Public Demo Ready
+      </div>
+      <router-link to="/login" class="signin-link">Access</router-link>
+    </div>
+  </header>
 </template>
 
 <script setup>
-import { defineEmits } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 const emit = defineEmits(['toggle-sidebar'])
+const route = useRoute()
+
+const titleMap = {
+  '/': 'Overview Dashboard',
+  '/cluster': 'Cluster Explorer',
+  '/login': 'Identity Access',
+  '/about': 'Project Brief'
+}
+
+const pageTitle = computed(() => titleMap[route.path] || 'KubeOps Dashboard')
 
 const toggleSidebar = () => {
   emit('toggle-sidebar')
 }
 </script>
+
+<style scoped>
+.topbar {
+  margin: 1.5rem 1.5rem 0;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topbar-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  background: rgba(15, 159, 110, 0.12);
+  color: #0f9f6e;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.signin-link {
+  padding: 0.78rem 1.15rem;
+  border-radius: 999px;
+  text-decoration: none;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.menu-button {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(148, 163, 184, 0.14);
+  display: grid;
+  place-items: center;
+}
+
+.menu-button span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: #33506f;
+  margin: 2px 0;
+}
+
+@media (max-width: 991.98px) {
+  .topbar {
+    margin: 1rem 1rem 0;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar-status {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+</style>

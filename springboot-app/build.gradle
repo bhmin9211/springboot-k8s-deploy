@@ -6,7 +6,12 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
 repositories {
     mavenCentral()
@@ -21,6 +26,8 @@ dependencies {
     // Kubernetes Client
     implementation 'io.fabric8:kubernetes-client:6.8.1'
     implementation 'io.fabric8:kubernetes-client-api:6.8.1'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
     
     // MariaDB Driver
     implementation 'org.mariadb.jdbc:mariadb-java-client'
@@ -42,4 +49,8 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+wrapper {
+    gradleVersion = '8.5'
 }

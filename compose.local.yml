@@ -1,0 +1,16 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: k8s-dashboard-local-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: 1234
+      MARIADB_DATABASE: k8s_dashboard
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_local_data:/var/lib/mysql
+      - ./springboot-app/src/main/resources/sql/render-init.sql:/docker-entrypoint-initdb.d/01-render-init.sql:ro
+
+volumes:
+  mariadb_local_data:

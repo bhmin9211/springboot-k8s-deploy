@@ -1,7 +1,7 @@
 package com.example.demo.config.filter;
 
-import com.example.demo.api.user.entity.UserEntity;
-import com.example.demo.api.user.repo.UserRepository;
+import com.example.demo.user.entity.UserEntity;
+import com.example.demo.user.repository.UserRepository;
 import com.example.demo.config.provider.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

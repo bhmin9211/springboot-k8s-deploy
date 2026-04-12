@@ -1,9 +1,11 @@
 package com.example.demo.config.provider;
 
+import com.example.demo.config.app.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -14,16 +16,16 @@ import java.util.Date;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
-    private String secretKey = "this-is-my-very-secret-jwt-key-2024"; // 최소 32자 이상 권장
-    private final long validityInMilliseconds = 3600000; // 1시간
+
+    private final JwtProperties jwtProperties;
 
     private Key key;
 
     @PostConstruct
     protected void init() {
-        // 문자열을 Key 객체로 안전하게 변환 (Base64 불필요)
-        key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        key = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     public String createToken(String username, String role) {
@@ -31,7 +33,7 @@ public class JwtTokenProvider {
         claims.put("role", role);
 
         Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
+        Date validity = new Date(now.getTime() + jwtProperties.getValidityMs());
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -67,14 +69,18 @@ public class JwtTokenProvider {
     }
 
     public String getUsername(String token) {
-        return Jwts.parser().setSigningKey(secretKey.getBytes())
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
     
     public String getRole(String token) {
-        return Jwts.parser().setSigningKey(secretKey.getBytes())
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role", String.class);
