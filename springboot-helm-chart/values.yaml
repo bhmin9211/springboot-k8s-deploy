@@ -11,9 +11,9 @@ resources: {}
 image:
   repository: byunghyukmin/springboot-app
 <<<<<<< Updated upstream
-  tag: a897aada639607ecc4c33d5589a7494d0443f031
+  tag: 051d6e1cd20cfc72b76b907bac3b3de1f60ae5ad
 =======
-  tag: 2a52acfa1b0a366d4e90bb2094eb2e873a049e36
+  tag: 051d6e1cd20cfc72b76b907bac3b3de1f60ae5ad
 >>>>>>> Stashed changes
   pullPolicy: IfNotPresent
 
