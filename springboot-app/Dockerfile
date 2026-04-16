@@ -1,27 +1,20 @@
 FROM eclipse-temurin:17-jdk AS builder
-
 WORKDIR /app
 
-# Gradle wrapper 및 설정 파일 먼저 복사
-COPY springboot-app/gradlew /app/
-COPY springboot-app/gradle /app/gradle
-COPY springboot-app/build.gradle /app/
-COPY springboot-app/settings.gradle /app/
-
+COPY springboot-app/gradlew .
+COPY springboot-app/gradle ./gradle
+COPY springboot-app/build.gradle .
+COPY springboot-app/settings.gradle .
+COPY springboot-app/gradle.properties ./
 RUN chmod +x gradlew
 
-# 의존성 캐시 레이어
 RUN ./gradlew dependencies --no-daemon || true
 
-# 전체 소스 복사
-COPY springboot-app /app
+COPY springboot-app/src ./src
 
-# 빌드
-RUN ./gradlew clean bootJar --no-daemon
+RUN ./gradlew clean bootJar -x test --no-daemon --stacktrace --info
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-
 COPY --from=builder /app/build/libs/*.jar app.jar
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
