@@ -5,7 +5,6 @@ COPY springboot-app/gradlew .
 COPY springboot-app/gradle ./gradle
 COPY springboot-app/build.gradle .
 COPY springboot-app/settings.gradle .
-COPY springboot-app/gradle.properties ./
 RUN chmod +x gradlew
 
 RUN ./gradlew dependencies --no-daemon || true
