@@ -49,12 +49,12 @@ const highlights = [
   {
     step: '03',
     title: 'Deploy Anywhere Configuration',
-    text: 'DB, JWT, CORS, API 주소를 환경변수화해 Render와 Vercel 배포 기준으로 맞췄습니다.'
+    text: 'DB, session auth, CORS, API 주소를 환경변수화해 Render와 Vercel 배포 기준으로 맞췄습니다.'
   }
 ]
 
 const stacks = [
-  { name: 'Backend', value: 'Spring Boot, Security, JPA, JWT' },
+  { name: 'Backend', value: 'Spring Boot, Security, JPA, OAuth2 Login' },
   { name: 'Frontend', value: 'Vue 3, Vite, Bootstrap, Axios' },
   { name: 'Delivery', value: 'GitHub Actions, Docker, Helm, Argo CD' },
   { name: 'Platform', value: 'Kubernetes, MariaDB, Render, Vercel' }

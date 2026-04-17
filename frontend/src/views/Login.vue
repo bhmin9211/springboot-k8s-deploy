@@ -2,24 +2,16 @@
   <section class="login-layout">
     <div class="glass-panel login-card">
       <p class="section-title">Identity Access</p>
-      <h2 class="login-title">JWT 기반 운영 대시보드 로그인</h2>
+      <h2 class="login-title">Keycloak 기반 운영 대시보드 로그인</h2>
       <p class="muted-copy mb-4">
-        Render에 배포된 백엔드와 연결되면 인증 토큰이 저장되고 이후 클러스터 조회 요청에 자동으로 포함됩니다.
+        메인 페이지는 서비스 UI를 유지하고, 실제 인증과 세션 관리는 백엔드가 Keycloak과 처리합니다.
       </p>
 
-      <form class="login-form" @submit.prevent="login">
-        <div>
-          <label class="form-label" for="username">아이디</label>
-          <input id="username" v-model="username" type="text" class="control-input" required />
-        </div>
-        <div>
-          <label class="form-label" for="password">비밀번호</label>
-          <input id="password" v-model="password" type="password" class="control-input" required />
-        </div>
-        <button type="submit" class="btn btn-accent w-100 py-3" :disabled="loading">
-          {{ loading ? 'Signing in...' : 'Sign In' }}
+      <div class="login-form">
+        <button type="button" class="btn btn-accent w-100 py-3" :disabled="loading" @click="login">
+          {{ loading ? 'Redirecting...' : 'Continue with Keycloak' }}
         </button>
-      </form>
+      </div>
 
       <p v-if="message" :class="['feedback', isError ? 'feedback-error' : 'feedback-ok']">
         {{ message }}
@@ -27,17 +19,17 @@
     </div>
 
     <div class="glass-panel access-card">
-      <p class="section-title">Demo Account</p>
+      <p class="section-title">Session Model</p>
       <div class="access-row">
-        <span>Username</span>
-        <strong>demo</strong>
+        <span>Browser</span>
+        <strong>HttpOnly Session</strong>
       </div>
       <div class="access-row">
-        <span>Password</span>
-        <strong>test1234</strong>
+        <span>Backend</span>
+        <strong>Keycloak Token Owner</strong>
       </div>
       <p class="muted-copy small mb-0">
-        외부 DB 초기화 스크립트를 적용하면 공개 데모에서 바로 확인할 수 있습니다.
+        프론트는 토큰을 직접 보관하지 않고, 로그인 상태는 `/auth/me` 응답으로 복원합니다.
       </p>
     </div>
   </section>
@@ -45,16 +37,14 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import api from '../axios'
+import { useRoute } from 'vue-router'
+import { startLogin } from '../auth/session'
 
-const username = ref('demo')
-const password = ref('test1234')
 const loading = ref(false)
 const message = ref('')
 const isError = ref(false)
 
-const router = useRouter()
+const route = useRoute()
 
 const login = async () => {
   loading.value = true
@@ -62,18 +52,10 @@ const login = async () => {
   isError.value = false
 
   try {
-    const response = await api.post('/auth/login', {
-      username: username.value,
-      password: password.value
-    })
-
-    localStorage.setItem('jwtToken', response.data.token)
-    message.value = '로그인 성공. Overview로 이동합니다.'
-    router.push('/')
+    startLogin(route.query.redirect || '/')
   } catch (error) {
     isError.value = true
-    message.value = error.response?.data?.message || '로그인에 실패했습니다.'
-  } finally {
+    message.value = '로그인을 시작하지 못했습니다.'
     loading.value = false
   }
 }
@@ -99,12 +81,6 @@ const login = async () => {
 .login-form {
   display: grid;
   gap: 1rem;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0.45rem;
-  color: var(--text-subtle);
 }
 
 .feedback {

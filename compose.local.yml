@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: mariadb:11.4
-    container_name: k8s-dashboard-local-db
+    container_name: kubeops-local-db
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: 1234
@@ -12,5 +12,83 @@ services:
       - mariadb_local_data:/var/lib/mysql
       - ./springboot-app/src/main/resources/sql/render-init.sql:/docker-entrypoint-initdb.d/01-render-init.sql:ro
 
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: kubeops-keycloak-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    container_name: kubeops-keycloak
+    restart: unless-stopped
+    command:
+      - start-dev
+      - --import-realm
+      - --hostname=host.docker.internal
+      - --hostname-port=8090
+      - --http-enabled=true
+      - --hostname-strict=false
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin1234
+    ports:
+      - "8090:8080"
+    depends_on:
+      - keycloak-db
+    volumes:
+      - ./infra/keycloak/import:/opt/keycloak/data/import:ro
+
+  backend:
+    build:
+      context: ./springboot-app
+    container_name: kubeops-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/k8s_dashboard
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:3000
+      APP_SECURITY_FRONTEND_BASE_URL: http://localhost:3000
+      APP_KUBERNETES_COMMANDS_ENABLED: true
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: http://host.docker.internal:8090/realms/kubeops-local
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID: kubeops-web
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET: kubeops-local-secret
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SCOPE: openid,profile,email
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mariadb
+      - keycloak
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8081/api
+        VITE_AUTH_LOGIN_PATH: /auth/login/keycloak
+        VITE_AUTH_LOGOUT_PATH: /auth/logout
+    container_name: kubeops-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   mariadb_local_data:
+  keycloak_db_data:

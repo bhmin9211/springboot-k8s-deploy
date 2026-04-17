@@ -49,7 +49,7 @@ defineEmits(['navigate'])
 const navigation = [
   { to: '/', label: 'Overview', caption: 'Cluster summary', icon: '01' },
   { to: '/cluster', label: 'Cluster', caption: 'Pods and services', icon: '02' },
-  { to: '/login', label: 'Login', caption: 'JWT access', icon: '03' },
+  { to: '/login', label: 'Login', caption: 'Session access', icon: '03' },
   { to: '/about', label: 'About', caption: 'Project story', icon: '04' }
 ]
 </script>

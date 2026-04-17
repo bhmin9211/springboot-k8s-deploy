@@ -1,0 +1,106 @@
+{
+  "realm": "kubeops-local",
+  "enabled": true,
+  "displayName": "KubeOps Local",
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer"
+      },
+      {
+        "name": "operator"
+      },
+      {
+        "name": "admin"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "kubeops-web",
+      "name": "KubeOps Web BFF",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "kubeops-local-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8081/api/login/oauth2/code/keycloak",
+        "http://host.docker.internal:8081/api/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://host.docker.internal:3000"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://host.docker.internal:3000/*"
+      },
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Local",
+      "lastName": "Viewer",
+      "email": "viewer@local.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "viewer1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer"
+      ]
+    },
+    {
+      "username": "operator",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Local",
+      "lastName": "Operator",
+      "email": "operator@local.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "operator1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer",
+        "operator"
+      ]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Local",
+      "lastName": "Admin",
+      "email": "admin@local.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer",
+        "operator",
+        "admin"
+      ]
+    }
+  ]
+}

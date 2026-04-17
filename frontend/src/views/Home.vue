@@ -155,11 +155,6 @@ const pipelineSteps = [
 ]
 
 const readCurrentUser = async () => {
-  const token = localStorage.getItem('jwtToken')
-  if (!token) {
-    return
-  }
-
   try {
     const response = await api.get('/auth/me')
     user.value = response.data

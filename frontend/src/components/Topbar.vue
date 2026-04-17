@@ -16,9 +16,16 @@
     <div class="topbar-status">
       <div class="status-chip">
         <span class="status-dot"></span>
-        Public Demo Ready
+        {{ sessionState.isAuthenticated ? 'Session Active' : 'Public Demo Ready' }}
       </div>
-      <router-link to="/login" class="signin-link">Access</router-link>
+      <span v-if="sessionState.isAuthenticated" class="identity-chip">
+        {{ sessionState.user?.username }}
+        <small v-if="primaryRole">{{ primaryRole }}</small>
+      </span>
+      <button v-if="sessionState.isAuthenticated" type="button" class="signin-link action-button" @click="signOut">
+        Logout
+      </button>
+      <router-link v-else to="/login" class="signin-link">Access</router-link>
     </div>
   </header>
 </template>
@@ -26,6 +33,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { logout, sessionState } from '../auth/session'
 
 const emit = defineEmits(['toggle-sidebar'])
 const route = useRoute()
@@ -38,9 +46,15 @@ const titleMap = {
 }
 
 const pageTitle = computed(() => titleMap[route.path] || 'KubeOps Dashboard')
+const primaryRole = computed(() => sessionState.user?.roles?.[0] || '')
 
 const toggleSidebar = () => {
   emit('toggle-sidebar')
+}
+
+const signOut = async () => {
+  await logout()
+  window.location.href = '/login'
 }
 </script>
 
@@ -93,6 +107,27 @@ const toggleSidebar = () => {
   font-weight: 700;
 }
 
+.identity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.78rem 1rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.identity-chip small {
+  color: var(--text-subtle);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.action-button {
+  border: 0;
+}
+
 .menu-button {
   width: 46px;
   height: 46px;
@@ -123,6 +158,7 @@ const toggleSidebar = () => {
   .topbar-status {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 }
 </style>
