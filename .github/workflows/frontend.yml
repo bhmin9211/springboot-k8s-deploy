@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'springboot-helm-chart/frontend-values.yaml'
-      - 'springboot-helm-chart/values.yaml'
+    paths:
+      - '.github/workflows/frontend.yml'
+      - 'frontend/**'
 
 jobs:
   build-and-push:
@@ -55,4 +55,3 @@ jobs:
           else
             echo " No changes to commit."
           fi
-

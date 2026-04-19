@@ -65,48 +65,27 @@
 프로젝트는 Vue 프론트엔드, Spring Boot 백엔드, Keycloak 인증, MariaDB 저장소, Kubernetes 배포 환경을 중심으로 구성됩니다.  
 배포 관점에서는 GitHub Actions, Docker Registry, Helm values, Argo CD가 연결되어 GitOps 방식으로 운영됩니다.
 
-배포 흐름 다이어그램 원본은 `devops-architecture.puml`이며, 아래에 그대로 배치했습니다.
+아래 다이어그램은 코드 반영부터 이미지 빌드, GitOps 동기화, 실제 서비스 실행까지의 전체 흐름을 보여줍니다.
 
-```puml
-@startuml
-!define RECTANGLE component
+```mermaid
+flowchart LR
+    Dev[Developer] -->|git push| GitHub[GitHub Repository]
+    GitHub -->|workflow trigger| Actions[GitHub Actions]
 
-skinparam backgroundColor #ffffff
-skinparam shadowing false
-skinparam componentStyle rectangle
-skinparam defaultFontSize 14
+    Actions -->|build and push images| Registry[Container Registry]
+    Actions -->|update image tag| HelmValues[Helm values]
+    Actions -->|commit or status check| GitHub
 
-actor Developer
+    HelmValues -->|GitOps source| ArgoCD[Argo CD]
+    ArgoCD -->|sync manifests| K8s[Kubernetes Cluster]
+    Registry -->|image pull| K8s
 
-component "GitHub Repository" as GitHub
-component "GitHub Actions" as CI
-component "Container Registry" as Registry
-component "Helm values" as HelmValues
-component "Argo CD\\n(GitOps Sync)" as ArgoCD
-component "minikube\\nKubernetes Cluster" as K8s
-component "Vue Dashboard" as Frontend
-component "Spring Boot API" as Backend
-database "MariaDB" as MariaDB
-component "Keycloak" as Keycloak
+    K8s -->|run frontend pod| Frontend[Vue Dashboard]
+    K8s -->|run backend pod| Backend[Spring Boot API]
 
-Developer --> GitHub : git push
-GitHub --> CI : workflow trigger
-
-CI --> Registry : build & push images
-CI --> HelmValues : update image tag
-CI --> GitHub : commit / status check
-
-HelmValues --> ArgoCD : GitOps source
-ArgoCD --> K8s : sync manifests
-Registry --> K8s : image pull
-
-K8s --> Frontend : run frontend pod
-K8s --> Backend : run backend pod
-
-Frontend --> Backend : session API call
-Backend --> Keycloak : oauth2 / session auth
-Backend --> MariaDB : application data
-@enduml
+    Frontend -->|session API call| Backend
+    Backend -->|oauth2 and session auth| Keycloak[Keycloak]
+    Backend -->|application data| MariaDB[MariaDB]
 ```
 
 아키텍처 기준 핵심 포인트:
