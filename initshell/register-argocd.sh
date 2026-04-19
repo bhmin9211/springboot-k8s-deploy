@@ -15,7 +15,7 @@ ARGOCD_SERVER="${ARGOCD_SERVER:-localhost:8080}"
 echo "📦 Argo CD 설치 확인"
 if ! kubectl get ns argocd >/dev/null 2>&1; then
   kubectl create namespace argocd
-  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 fi
 
 if ! lsof -i :8080 >/dev/null 2>&1; then
@@ -25,7 +25,7 @@ if ! lsof -i :8080 >/dev/null 2>&1; then
 fi
 
 echo "🛠️ 로컬 minikube 이미지 준비"
-"$(dirname "$0")/quick-deploy.sh"
+"$(dirname "$0")/build-minikube-images.sh"
 
 ARGOCD_PASSWORD="$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)"
 argocd login "$ARGOCD_SERVER" --username admin --password "$ARGOCD_PASSWORD" --insecure
@@ -45,4 +45,4 @@ argocd app create "$APP_NAME" \
 argocd app sync "$APP_NAME"
 
 echo "✅ Argo CD 앱 등록 완료: $APP_NAME"
-echo "기본 GitOps 시연 경로가 준비되었습니다."
+echo "별도 터미널에서 minikube tunnel 실행 후 /etc/hosts 를 127.0.0.1 기준으로 맞추면 브라우저 접속이 가능합니다."

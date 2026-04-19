@@ -15,7 +15,7 @@ fi
 echo "📦 macOS용 CLI 설치를 시작합니다."
 
 brew update
-brew install kubectl minikube helm argocd
+brew install kubectl minikube helm argocd docker-compose
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "⚠️ docker CLI가 없습니다. Docker Desktop 설치가 필요합니다."
@@ -28,6 +28,7 @@ echo "kubectl: $(kubectl version --client --output=yaml 2>/dev/null | rg 'gitVer
 echo "minikube: $(minikube version | head -n 1)"
 echo "helm: $(helm version --short)"
 echo "argocd: $(argocd version --client --short 2>/dev/null || echo 'installed')"
+echo "docker-compose: $(docker-compose version --short 2>/dev/null || echo 'not found')"
 echo
 echo "다음 단계:"
 echo "1. ./initshell/setup-all.sh"

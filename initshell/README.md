@@ -28,6 +28,7 @@
 - `minikube`
 - `helm`
 - `argocd`
+- `docker-compose`
 
 ## 2. minikube 클러스터 시작
 
@@ -39,7 +40,16 @@
 
 - minikube 시작
 - ingress addon 활성화
-- `api.kubeops.local`, `dashboard.kubeops.local`용 hosts 안내 출력
+- `api.kubeops.local`, `dashboard.kubeops.local` 접속 안내 출력
+
+권장 접속 방식:
+
+1. 별도 터미널에서 `minikube tunnel` 실행
+2. `/etc/hosts`에 아래 추가
+
+```txt
+127.0.0.1 api.kubeops.local dashboard.kubeops.local
+```
 
 ## 3. 로컬 인프라 실행
 
@@ -49,7 +59,7 @@ minikube에서 앱만 검증하고, Keycloak/MariaDB는 Mac 호스트에서 comp
 docker-compose -f compose.local.yml up -d mariadb keycloak-db keycloak
 ```
 
-백엔드는 `host.minikube.internal`을 통해 호스트의 Keycloak/MariaDB에 접근한다.
+백엔드는 호스트에서 실행 중인 Keycloak/MariaDB를 참조해 로컬 인증 흐름을 구성한다.
 
 ## 4. 기본 GitOps 경로: Argo CD 등록
 
@@ -61,9 +71,14 @@ docker-compose -f compose.local.yml up -d mariadb keycloak-db keycloak
 
 - Argo CD 설치 확인
 - `argocd-server` 포트포워딩
-- 내부적으로 `quick-deploy.sh`를 실행해 minikube용 이미지를 준비
+- `build-minikube-images.sh`를 실행해 minikube용 이미지를 준비
 - 현재 repo의 Helm chart를 Argo CD app으로 등록
 - Argo CD sync 실행
+
+중요:
+
+- 이 경로는 Argo CD가 배포를 담당한다.
+- 따라서 `register-argocd.sh`는 Helm 직접 배포를 하지 않고 이미지 준비와 앱 등록만 수행한다.
 
 ## 5. 빠른 검증 경로: 직접 Helm 배포
 
@@ -72,6 +87,16 @@ docker-compose -f compose.local.yml up -d mariadb keycloak-db keycloak
 ```
 
 이 경로는 코드 수정 후 빠르게 앱만 확인할 때 사용한다.
+
+권장 접속 방식은 동일하다.
+
+```bash
+minikube tunnel
+```
+
+```txt
+127.0.0.1 api.kubeops.local dashboard.kubeops.local
+```
 
 ## 스크립트 설명
 
@@ -83,9 +108,14 @@ docker-compose -f compose.local.yml up -d mariadb keycloak-db keycloak
 
 - minikube 시작과 ingress 준비
 
+### `build-minikube-images.sh`
+
+- minikube 내부 Docker 환경에 backend/frontend 이미지 빌드
+
 ### `register-argocd.sh`
 
 - 기본 GitOps 시연 경로
+- 이미지 준비 후 Argo CD app 등록과 sync 수행
 
 ### `quick-deploy.sh`
 

@@ -13,19 +13,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 cd "$ROOT_DIR"
 
-echo "🐳 minikube docker-env 연결"
-eval "$(minikube -p "$PROFILE" docker-env)"
-
-echo "🏗️ backend image build: $BACKEND_IMAGE"
-docker build -t "$BACKEND_IMAGE" ./springboot-app
-
-echo "🏗️ frontend image build: $FRONTEND_IMAGE"
-docker build \
-  -t "$FRONTEND_IMAGE" \
-  --build-arg VITE_API_BASE_URL="http://$API_HOST/api" \
-  --build-arg VITE_AUTH_LOGIN_PATH="/auth/login/keycloak" \
-  --build-arg VITE_AUTH_LOGOUT_PATH="/auth/logout" \
-  ./frontend
+"$(dirname "$0")/build-minikube-images.sh"
 
 echo "🚀 Helm 배포"
 helm upgrade --install springboot-app ./springboot-helm-chart \
@@ -43,5 +31,7 @@ helm upgrade --install springboot-app ./springboot-helm-chart \
 
 echo
 echo "✅ minikube 배포 완료"
-echo "hosts 파일에 아래를 추가하세요:"
-echo "$(minikube -p "$PROFILE" ip) $API_HOST $FRONTEND_HOST"
+echo "권장 접속 방식:"
+echo "1. 별도 터미널에서 minikube tunnel 실행"
+echo "2. /etc/hosts 에 아래를 추가"
+echo "   127.0.0.1 $API_HOST $FRONTEND_HOST"

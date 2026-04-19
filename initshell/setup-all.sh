@@ -4,7 +4,7 @@ set -euo pipefail
 
 PROFILE="${MINIKUBE_PROFILE:-minikube}"
 CPUS="${MINIKUBE_CPUS:-4}"
-MEMORY="${MINIKUBE_MEMORY:-8192}"
+MEMORY="${MINIKUBE_MEMORY:-6144}"
 DRIVER="${MINIKUBE_DRIVER:-docker}"
 
 cd "$(dirname "$0")/.."
@@ -27,8 +27,10 @@ echo
 echo "✅ minikube 준비 완료"
 echo "minikube ip: $MINIKUBE_IP"
 echo
-echo "hosts 파일 예시:"
-echo "$MINIKUBE_IP api.kubeops.local dashboard.kubeops.local"
+echo "권장 접속 방식:"
+echo "1. 별도 터미널에서 minikube tunnel 실행"
+echo "2. /etc/hosts 에 아래를 추가"
+echo "   127.0.0.1 api.kubeops.local dashboard.kubeops.local"
 echo
 echo "다음 단계:"
 echo "1. docker-compose -f compose.local.yml up -d mariadb keycloak-db keycloak"
