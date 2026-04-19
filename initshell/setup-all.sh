@@ -1,25 +1,36 @@
-#!/bin/bash
-set -e
-echo "🔍 ArgoCD 설치 여부 확인 중..."
-if ! kubectl get ns argocd &>/dev/null; then
-  echo "📦 ArgoCD 설치 중..."
-  kubectl create namespace argocd
-  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-else
-  echo "✅ ArgoCD는 이미 설치되어 있습니다."
-fi
+#!/usr/bin/env bash
 
-if ! lsof -i :8080 &>/dev/null; then
-  echo "🌐 포트포워딩 시작 (백그라운드)..."
-  nohup kubectl port-forward svc/argocd-server -n argocd 8080:443 > argocd-portforward.log 2>&1 &
-else
-  echo "🔁 포트포워딩 이미 실행 중"
-fi
+set -euo pipefail
 
-echo "📄 install-cli 생성 중..."
-./install-cli.sh
+PROFILE="${MINIKUBE_PROFILE:-minikube}"
+CPUS="${MINIKUBE_CPUS:-4}"
+MEMORY="${MINIKUBE_MEMORY:-8192}"
+DRIVER="${MINIKUBE_DRIVER:-docker}"
 
-echo "🧩 ArgoCD 앱 등록 중..."
-./register-argocd.sh
+cd "$(dirname "$0")/.."
 
-echo "🎉 전체 자동화 완료!"
+echo "🚀 minikube 시작"
+minikube start -p "$PROFILE" --driver="$DRIVER" --cpus="$CPUS" --memory="$MEMORY"
+
+echo "🔌 ingress addon 활성화"
+minikube -p "$PROFILE" addons enable ingress
+
+echo "⏳ ingress controller 준비 대기"
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=180s || true
+
+MINIKUBE_IP="$(minikube -p "$PROFILE" ip)"
+
+echo
+echo "✅ minikube 준비 완료"
+echo "minikube ip: $MINIKUBE_IP"
+echo
+echo "hosts 파일 예시:"
+echo "$MINIKUBE_IP api.kubeops.local dashboard.kubeops.local"
+echo
+echo "다음 단계:"
+echo "1. docker-compose -f compose.local.yml up -d mariadb keycloak-db keycloak"
+echo "2. 기본 GitOps 경로: ./initshell/register-argocd.sh"
+echo "3. 빠른 검증 경로: ./initshell/quick-deploy.sh"

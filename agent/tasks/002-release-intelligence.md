@@ -6,6 +6,7 @@
 ## Reference Docs
 
 - `../architecture/PROJECT_EXPANSION_IDEAS.md`
+- `../architecture/upgrade_plan.md`
 
 ## Scope
 - 배포 타임라인

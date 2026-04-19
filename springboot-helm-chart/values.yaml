@@ -10,12 +10,10 @@ resources: {}
 # ----------------------------------------
 image:
   repository: byunghyukmin/springboot-app
-<<<<<<< Updated upstream
   tag: 3cf3a5b8949b25d38ca2c6177a040371e869ce48
-=======
-  tag: 3cf3a5b8949b25d38ca2c6177a040371e869ce48
->>>>>>> Stashed changes
   pullPolicy: IfNotPresent
+
+backendEnv: []
 
 service:
   name: springboot-app-service

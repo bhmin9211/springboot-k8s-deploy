@@ -7,6 +7,7 @@
 
 - `../architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
 - `../architecture/ROLE_MODEL_IDEAS.md`
+- `../architecture/upgrade_plan.md`
 
 ## Scope
 - Spring Security `oauth2Login + session`

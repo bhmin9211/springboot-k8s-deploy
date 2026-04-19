@@ -6,6 +6,7 @@ Overview를 운영 판단 화면으로 만든다.
 ## Reference Docs
 
 - `../architecture/PROJECT_EXPANSION_IDEAS.md`
+- `../architecture/upgrade_plan.md`
 
 ## Scope
 - unhealthy pod

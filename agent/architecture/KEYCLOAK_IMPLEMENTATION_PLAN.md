@@ -52,14 +52,14 @@
 
 현재 기준 코드 상태:
 
-- 프론트는 [frontend/src/views/Login.vue](/Users/bhmin/Desktop/Project/side/frontend/src/views/Login.vue)에서 아이디/비밀번호를 직접 입력받아 `/auth/login` 호출
-- Axios는 [frontend/src/axios.js](/Users/bhmin/Desktop/Project/side/frontend/src/axios.js)에서 `localStorage.jwtToken`을 읽어 `Authorization` 헤더를 자동 주입
-- 라우터는 [frontend/src/router/index.js](/Users/bhmin/Desktop/Project/side/frontend/src/router/index.js)에 인증 가드가 없음
-- 백엔드는 [springboot-app/src/main/java/com/example/demo/auth/controller/AuthController.java](/Users/bhmin/Desktop/Project/side/springboot-app/src/main/java/com/example/demo/auth/controller/AuthController.java)와 [springboot-app/src/main/java/com/example/demo/auth/service/AuthService.java](/Users/bhmin/Desktop/Project/side/springboot-app/src/main/java/com/example/demo/auth/service/AuthService.java)에서 자체 로그인 처리
-- 보안 설정은 [springboot-app/src/main/java/com/example/demo/config/security/SecurityConfig.java](/Users/bhmin/Desktop/Project/side/springboot-app/src/main/java/com/example/demo/config/security/SecurityConfig.java)에서 자체 JWT 필터 기반
-- 서버 컨텍스트 경로는 [springboot-app/src/main/resources/application.yml](/Users/bhmin/Desktop/Project/side/springboot-app/src/main/resources/application.yml) 기준 `/api`
+- 프론트는 [frontend/src/views/Login.vue](/Users/bhmin/Desktop/project/bhminproject/frontend/src/views/Login.vue)에서 인증 진입 UI를 제공
+- Axios는 [frontend/src/axios.js](/Users/bhmin/Desktop/project/bhminproject/frontend/src/axios.js)에서 `withCredentials` 기반 세션 호출을 사용한다
+- 라우터는 [frontend/src/router/index.js](/Users/bhmin/Desktop/project/bhminproject/frontend/src/router/index.js)에서 보호 라우트 가드를 점진적으로 적용 중이다
+- 백엔드는 [springboot-app/src/main/java/com/example/demo/auth/controller/AuthController.java](/Users/bhmin/Desktop/project/bhminproject/springboot-app/src/main/java/com/example/demo/auth/controller/AuthController.java)와 관련 security 설정에서 세션 기반 인증 흐름을 제공한다
+- 보안 설정은 [springboot-app/src/main/java/com/example/demo/config/security/SecurityConfig.java](/Users/bhmin/Desktop/project/bhminproject/springboot-app/src/main/java/com/example/demo/config/security/SecurityConfig.java) 중심으로 관리한다
+- 서버 컨텍스트 경로는 [springboot-app/src/main/resources/application.yml](/Users/bhmin/Desktop/project/bhminproject/springboot-app/src/main/resources/application.yml) 기준 `/api`
 
-즉, 이번 작업은 `자체 JWT 발급/검증 제거`와 `Keycloak 기반 서버 세션 인증 전환`이 핵심이다.
+즉, 남은 핵심은 `Keycloak role 매핑`, `세션 로그아웃 하드닝`, `권한 정책 연결`이다.
 
 ## 5. Target Design
 

@@ -7,6 +7,7 @@
 
 - `../architecture/ROLE_MODEL_IDEAS.md`
 - `../architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
+- `../architecture/upgrade_plan.md`
 
 ## Scope
 - role badge

@@ -8,6 +8,7 @@
 - `../architecture/PROJECT_EXPANSION_IDEAS.md`
 - `../architecture/ROLE_MODEL_IDEAS.md`
 - `../architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
+- `../architecture/upgrade_plan.md`
 
 ## Scope
 - 현재 사용자

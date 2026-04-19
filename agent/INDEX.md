@@ -7,12 +7,12 @@
 - architecture: 구조/정책/마이그레이션 기준 문서
 - tasks: 실제 구현 작업 단위
 
-현재 실제 폴더:
+현재 폴더:
 
 - `agent/architecture`
 - `agent/tasks`
 
-## Current Summary
+## Current Direction
 
 지금까지 정리된 핵심 방향은 아래와 같다.
 
@@ -24,11 +24,31 @@
    - Operational Readiness
    - Release Intelligence
    - Access / Audit Center
-6. 로컬 개발은 `compose.local.yml` 기준으로 MariaDB + Keycloak + Backend + Frontend 스택을 사용할 수 있게 정리했다.
+6. 현재 포트폴리오 방향은 `운영형 플랫폼 포트폴리오` 메시지를 가장 강하게 가져간다.
+7. 로컬 개발은 `compose.local.yml` 기준으로 MariaDB + Keycloak + Backend + Frontend 스택을 사용할 수 있게 정리했다.
+
+## Start Here
+
+가장 먼저 보면 좋은 문서는 아래 3개다.
+
+1. `architecture/upgrade_plan.md`
+2. `architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
+3. `architecture/ROLE_MODEL_IDEAS.md`
+
+이 셋만 읽어도 현재 프로젝트의 포트폴리오 방향, 인증 구조, 권한 모델을 이해할 수 있다.
 
 ## Architecture Docs
 
-### 1. Keycloak / Session Architecture
+### 1. Portfolio Upgrade
+
+- `architecture/upgrade_plan.md`
+- 내용:
+  - 클라우드 / 백엔드 포지션 기준 포트폴리오 정렬
+  - 현재 프로젝트의 적합도 분석
+  - 화면/README/기술 스토리 업그레이드 방향
+  - 구현 우선순위와 단계별 실행 순서
+
+### 2. Keycloak / Session Architecture
 
 - `architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
 - 내용:
@@ -38,7 +58,7 @@
   - 구현 순서
   - 코딩 컨벤션
 
-### 2. Project Expansion Direction
+### 3. Project Expansion Direction
 
 - `architecture/PROJECT_EXPANSION_IDEAS.md`
 - 내용:
@@ -49,7 +69,7 @@
     - Access / Audit Center
     - Incident / Runbook
 
-### 3. Role Model
+### 4. Role Model
 
 - `architecture/ROLE_MODEL_IDEAS.md`
 - 내용:
@@ -106,14 +126,15 @@
 
 구조를 이해하려면 아래 순서가 가장 좋다.
 
-1. `architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
-2. `architecture/ROLE_MODEL_IDEAS.md`
-3. `architecture/PROJECT_EXPANSION_IDEAS.md`
-4. `tasks/004-keycloak-phase1.md`
-5. `tasks/005-role-enforcement-phase1.md`
-6. `tasks/001-operational-readiness.md`
-7. `tasks/002-release-intelligence.md`
-8. `tasks/003-access-audit-center.md`
+1. `architecture/upgrade_plan.md`
+2. `architecture/KEYCLOAK_IMPLEMENTATION_PLAN.md`
+3. `architecture/ROLE_MODEL_IDEAS.md`
+4. `architecture/PROJECT_EXPANSION_IDEAS.md`
+5. `tasks/004-keycloak-phase1.md`
+6. `tasks/005-role-enforcement-phase1.md`
+7. `tasks/001-operational-readiness.md`
+8. `tasks/002-release-intelligence.md`
+9. `tasks/003-access-audit-center.md`
 
 ## Recommended Working Order
 
@@ -124,11 +145,21 @@
 3. `tasks/001-operational-readiness.md`
 4. `tasks/002-release-intelligence.md`
 5. `tasks/003-access-audit-center.md`
+6. README / About narrative cleanup
 
-## Immediate Next Step
+## Current Priority
 
 현재 기준 다음 실행 우선순위는:
 
-1. 역할 모델 1차 적용
-2. Keycloak role 매핑/권한 검사 완성
+1. Keycloak role 매핑과 세션 로그아웃 하드닝 마무리
+2. 역할 모델 1차 적용
 3. Overview를 운영 판단형 화면으로 고도화
+4. Release summary를 첫 화면에 연결
+
+## Status Snapshot
+
+- `004-keycloak-phase1`: in progress
+- `005-role-enforcement-phase1`: planned
+- `001-operational-readiness`: planned
+- `002-release-intelligence`: planned
+- `003-access-audit-center`: planned

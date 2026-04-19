@@ -1,71 +1,36 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-OS_TYPE=$(uname -s)
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "이 스크립트는 macOS 기준으로 작성되었습니다."
+  exit 1
+fi
 
-install_helm() {
-  echo "🔍 Helm 설치 중..."
-  if command -v helm &>/dev/null; then
-    echo "✅ Helm 이미 설치됨: $(helm version --short)"
-    return
-  fi
+if ! command -v brew >/dev/null 2>&1; then
+  echo "Homebrew가 필요합니다. 먼저 https://brew.sh 에서 설치해주세요."
+  exit 1
+fi
 
-  case "$OS_TYPE" in
-    Linux)
-      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-      ;;
-    Darwin)
-      brew install helm
-      ;;
-    MINGW*|MSYS*|CYGWIN*|Windows_NT)
-      mkdir -p ~/bin
-      curl -sSL https://get.helm.sh/helm-v3.13.2-windows-amd64.zip -o helm.zip
-      unzip helm.zip
-      mv windows-amd64/helm.exe ~/bin/helm.exe
-      rm -rf helm.zip windows-amd64
-      ;;
-    *)
-      echo "❌ 알 수 없는 OS: $OS_TYPE"
-      exit 1
-      ;;
-  esac
-}
+echo "📦 macOS용 CLI 설치를 시작합니다."
 
-install_argocd() {
-  echo "🔍 ArgoCD CLI 설치 중..."
-  if command -v argocd &>/dev/null; then
-    echo "✅ ArgoCD CLI 이미 설치됨: $(argocd version --client --short || echo '확인 완료')"
-    return
-  fi
+brew update
+brew install kubectl minikube helm argocd
 
-  case "$OS_TYPE" in
-    Linux)
-      curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-      chmod +x argocd
-      sudo mv argocd /usr/local/bin/
-      ;;
-    Darwin)
-      brew install argocd
-      ;;
-    MINGW*|MSYS*|CYGWIN*|Windows_NT)
-      mkdir -p ~/bin
-      curl -sSL -o ~/bin/argocd.exe https://github.com/argoproj/argo-cd/releases/latest/download/argocd-windows-amd64.exe
-      chmod +x ~/bin/argocd.exe
-      ;;
-    *)
-      echo "❌ 알 수 없는 OS: $OS_TYPE"
-      exit 1
-      ;;
-  esac
-}
+if ! command -v docker >/dev/null 2>&1; then
+  echo "⚠️ docker CLI가 없습니다. Docker Desktop 설치가 필요합니다."
+  echo "   brew install --cask docker"
+fi
 
-echo "📦 Helm & ArgoCD 설치 자동화 시작"
-install_helm
-install_argocd
-
-echo "✅ PATH에 ~/bin 추가 권장 (Git Bash 사용자)"
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc || true
-
-echo "🎉 모든 CLI 설치 완료!"
+echo
+echo "✅ 설치 확인"
+echo "kubectl: $(kubectl version --client --output=yaml 2>/dev/null | rg 'gitVersion' -m 1 || true)"
+echo "minikube: $(minikube version | head -n 1)"
+echo "helm: $(helm version --short)"
+echo "argocd: $(argocd version --client --short 2>/dev/null || echo 'installed')"
+echo
+echo "다음 단계:"
+echo "1. ./initshell/setup-all.sh"
+echo "2. docker-compose -f compose.local.yml up -d mariadb keycloak keycloak-db"
+echo "3. ./initshell/register-argocd.sh"
+echo "   빠른 앱 검증만 필요하면: ./initshell/quick-deploy.sh"
