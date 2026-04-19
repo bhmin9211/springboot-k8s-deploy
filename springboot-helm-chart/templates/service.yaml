@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/component: backend
 spec:
   selector:
-    {{- include "springboot-app.backendSelectorLabels" . | nindent 4 }}
+    app: {{ .Chart.Name }}
   ports:
     - protocol: TCP
       port: {{ .Values.service.port }}

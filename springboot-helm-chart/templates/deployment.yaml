@@ -9,11 +9,12 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "springboot-app.backendSelectorLabels" . | nindent 6 }}
+      app: {{ .Chart.Name }}
   template:
     metadata:
       labels:
         {{- include "springboot-app.labels" . | nindent 8 }}
+        app: {{ .Chart.Name }}
         {{- include "springboot-app.backendSelectorLabels" . | nindent 8 }}
     spec:
       containers:

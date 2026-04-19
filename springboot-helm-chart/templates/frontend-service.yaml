@@ -8,7 +8,7 @@ metadata:
 spec:
   type: {{ .Values.frontend.service.type }}
   selector:
-    {{- include "springboot-app.frontendSelectorLabels" . | nindent 4 }}
+    app: {{ .Values.frontend.service.name }}
   ports:
     - port: {{ .Values.frontend.service.port }}
       targetPort: {{ .Values.frontend.service.targetPort }}

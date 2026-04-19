@@ -9,11 +9,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "springboot-app.frontendSelectorLabels" . | nindent 6 }}
+      app: {{ .Values.frontend.service.name }}
   template:
     metadata:
       labels:
         {{- include "springboot-app.labels" . | nindent 8 }}
+        app: {{ .Values.frontend.service.name }}
         {{- include "springboot-app.frontendSelectorLabels" . | nindent 8 }}
     spec:
       containers:
