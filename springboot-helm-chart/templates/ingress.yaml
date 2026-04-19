@@ -3,6 +3,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "springboot-app.fullname" . }}-ingress
+  labels:
+    {{- include "springboot-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:

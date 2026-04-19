@@ -68,24 +68,55 @@
 아래 다이어그램은 코드 반영부터 이미지 빌드, GitOps 동기화, 실제 서비스 실행까지의 전체 흐름을 보여줍니다.
 
 ```mermaid
-flowchart LR
-    Dev[Developer] -->|git push| GitHub[GitHub Repository]
-    GitHub -->|workflow trigger| Actions[GitHub Actions]
+flowchart TD
+    Dev[Developer]
+    GitHub[GitHub Repository]
+    Actions[GitHub Actions]
+    Registry[Container Registry]
+    HelmValues[Helm values]
+    ArgoCDApp[Argo CD Application]
+    ArgoCDSync[Argo CD Sync Controller]
+    K8s[Kubernetes Cluster]
+    FrontendIngress[Frontend Ingress]
+    ApiIngress[API Ingress]
+    FrontendService[Frontend Service]
+    BackendService[Backend Service]
+    FrontendDeploy[Frontend Deployment]
+    BackendDeploy[Backend Deployment]
+    Frontend[Vue Dashboard Pod]
+    Backend[Spring Boot API Pod]
+    Keycloak[Keycloak]
+    MariaDB[MariaDB]
 
-    Actions -->|build and push images| Registry[Container Registry]
-    Actions -->|update image tag| HelmValues[Helm values]
-    Actions -->|commit or status check| GitHub
+    Dev -->|1. git push| GitHub
+    GitHub -->|2. workflow trigger| Actions
 
-    HelmValues -->|GitOps source| ArgoCD[Argo CD]
-    ArgoCD -->|sync manifests| K8s[Kubernetes Cluster]
-    Registry -->|image pull| K8s
+    subgraph BuildAndRelease[Build and Release]
+        Actions -->|3. build and push images| Registry
+        Actions -->|4. update image tag| HelmValues
+        Actions -->|5. commit release metadata| GitHub
+    end
 
-    K8s -->|run frontend pod| Frontend[Vue Dashboard]
-    K8s -->|run backend pod| Backend[Spring Boot API]
+    subgraph GitOpsSync[GitOps Sync]
+        HelmValues -->|6. GitOps source| ArgoCDApp
+        Registry -->|7. image pull| K8s
+        ArgoCDApp -->|7. manage desired state| ArgoCDSync
+        ArgoCDSync -->|8. sync manifests| K8s
+    end
 
-    Frontend -->|session API call| Backend
-    Backend -->|oauth2 and session auth| Keycloak[Keycloak]
-    Backend -->|application data| MariaDB[MariaDB]
+    subgraph Runtime[Runtime]
+        K8s -->|9. expose dashboard host| FrontendIngress
+        K8s -->|10. expose api host| ApiIngress
+        FrontendIngress -->|11. route traffic| FrontendService
+        ApiIngress -->|12. route traffic| BackendService
+        FrontendService -->|13. select pods| FrontendDeploy
+        BackendService -->|14. select pods| BackendDeploy
+        FrontendDeploy -->|15. run pod| Frontend
+        BackendDeploy -->|16. run pod| Backend
+        Frontend -->|17. session API call| Backend
+        Backend -->|18. oauth2 and session auth| Keycloak
+        Backend -->|19. application data| MariaDB
+    end
 ```
 
 아키텍처 기준 핵심 포인트:

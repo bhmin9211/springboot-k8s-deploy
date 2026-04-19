@@ -2,15 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.frontend.service.name }}
+  labels:
+    {{- include "springboot-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.frontend.service.name }}
+      {{- include "springboot-app.frontendSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ .Values.frontend.service.name }}
+        {{- include "springboot-app.labels" . | nindent 8 }}
+        {{- include "springboot-app.frontendSelectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: frontend
@@ -18,4 +22,3 @@ spec:
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - containerPort: 80
-

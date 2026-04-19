@@ -2,6 +2,7 @@ package com.example.demo.auth.controller;
 
 import com.example.demo.config.app.SecurityProperties;
 import com.example.demo.config.security.OAuth2LoginSuccessHandler;
+import com.example.demo.config.security.SecurityRoles;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -57,13 +59,18 @@ public class AuthController {
         }
 
         Map<String, Object> response = new LinkedHashMap<>();
+        List<String> roles = SecurityRoles.normalizeRoleAuthorities(authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList());
         response.put("username", firstNonBlank(oidcUser.getPreferredUsername(), oidcUser.getSubject()));
         response.put("email", oidcUser.getEmail());
         response.put("name", oidcUser.getFullName());
-        response.put("roles", authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .sorted()
-                .toList());
+        response.put("roles", roles);
+        response.put("access", Map.of(
+                "canView", !roles.isEmpty(),
+                "canOperate", roles.contains(SecurityRoles.OPERATOR) || roles.contains(SecurityRoles.ADMIN),
+                "canAdmin", roles.contains(SecurityRoles.ADMIN)
+        ));
         response.put("authenticated", true);
 
         return ResponseEntity.ok(response);
@@ -77,10 +84,14 @@ public class AuthController {
                     .body(Map.of("authenticated", false));
         }
 
+        List<String> roles = SecurityRoles.normalizeRoleAuthorities(authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList());
+
         return ResponseEntity.ok(Map.of(
                 "authenticated", true,
                 "username", firstNonBlank(oidcUser.getPreferredUsername(), oidcUser.getSubject()),
-                "roles", authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).sorted().toList()
+                "roles", roles
         ));
     }
 

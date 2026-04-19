@@ -1,6 +1,7 @@
 package com.example.demo.k8s.controller;
 
 import com.example.demo.config.app.KubernetesProperties;
+import com.example.demo.config.security.SecurityRoles;
 import com.example.demo.k8s.dto.DeploymentInfo;
 import com.example.demo.k8s.dto.NodeInfo;
 import com.example.demo.k8s.dto.PodInfo;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,22 +33,26 @@ public class KubernetesController {
     private final KubernetesFacade kubernetesFacade;
     private final KubernetesProperties kubernetesProperties;
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/pods")
     public ResponseEntity<List<PodInfo>> getAllPods() {
         return ResponseEntity.ok(kubernetesFacade.getAllPods());
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces/{namespace}/pods")
     public ResponseEntity<List<PodInfo>> getPodsByNamespace(@PathVariable String namespace) {
         return ResponseEntity.ok(kubernetesFacade.getPodsByNamespace(namespace));
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces/{namespace}/pods/{name}")
     public ResponseEntity<PodInfo> getPodByName(@PathVariable String namespace, @PathVariable String name) {
         PodInfo pod = kubernetesFacade.getPodByName(namespace, name);
         return pod != null ? ResponseEntity.ok(pod) : ResponseEntity.notFound().build();
     }
 
+    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
     @DeleteMapping("/namespaces/{namespace}/pods/{name}")
     public ResponseEntity<String> deletePod(@PathVariable String namespace, @PathVariable String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -58,33 +64,39 @@ public class KubernetesController {
                 : ResponseEntity.badRequest().body("Pod 삭제에 실패했습니다.");
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/nodes")
     public ResponseEntity<List<NodeInfo>> getAllNodes() {
         return ResponseEntity.ok(kubernetesFacade.getAllNodes());
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/nodes/{name}")
     public ResponseEntity<NodeInfo> getNodeByName(@PathVariable String name) {
         NodeInfo node = kubernetesFacade.getNodeByName(name);
         return node != null ? ResponseEntity.ok(node) : ResponseEntity.notFound().build();
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/deployments")
     public ResponseEntity<List<DeploymentInfo>> getAllDeployments() {
         return ResponseEntity.ok(kubernetesFacade.getAllDeployments());
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces/{namespace}/deployments")
     public ResponseEntity<List<DeploymentInfo>> getDeploymentsByNamespace(@PathVariable String namespace) {
         return ResponseEntity.ok(kubernetesFacade.getDeploymentsByNamespace(namespace));
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces/{namespace}/deployments/{name}")
     public ResponseEntity<DeploymentInfo> getDeploymentByName(@PathVariable String namespace, @PathVariable String name) {
         DeploymentInfo deployment = kubernetesFacade.getDeploymentByName(namespace, name);
         return deployment != null ? ResponseEntity.ok(deployment) : ResponseEntity.notFound().build();
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @PutMapping("/namespaces/{namespace}/deployments/{name}/scale")
     public ResponseEntity<String> scaleDeployment(@PathVariable String namespace,
                                                   @PathVariable String name,
@@ -98,22 +110,26 @@ public class KubernetesController {
                 : ResponseEntity.badRequest().body("Deployment 스케일링에 실패했습니다.");
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/services")
     public ResponseEntity<List<ServiceInfo>> getAllServices() {
         return ResponseEntity.ok(kubernetesFacade.getAllServices());
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces/{namespace}/services")
     public ResponseEntity<List<ServiceInfo>> getServicesByNamespace(@PathVariable String namespace) {
         return ResponseEntity.ok(kubernetesFacade.getServicesByNamespace(namespace));
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces/{namespace}/services/{name}")
     public ResponseEntity<ServiceInfo> getServiceByName(@PathVariable String namespace, @PathVariable String name) {
         ServiceInfo service = kubernetesFacade.getServiceByName(namespace, name);
         return service != null ? ResponseEntity.ok(service) : ResponseEntity.notFound().build();
     }
 
+    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
     @DeleteMapping("/namespaces/{namespace}/services/{name}")
     public ResponseEntity<String> deleteService(@PathVariable String namespace, @PathVariable String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -125,11 +141,13 @@ public class KubernetesController {
                 : ResponseEntity.badRequest().body("Service 삭제에 실패했습니다.");
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/namespaces")
     public ResponseEntity<List<String>> getAllNamespaces() {
         return ResponseEntity.ok(kubernetesFacade.getAllNamespaces());
     }
 
+    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
     @PostMapping("/namespaces")
     public ResponseEntity<String> createNamespace(@RequestParam String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -141,6 +159,7 @@ public class KubernetesController {
                 : ResponseEntity.badRequest().body("Namespace 생성에 실패했습니다.");
     }
 
+    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
     @DeleteMapping("/namespaces/{name}")
     public ResponseEntity<String> deleteNamespace(@PathVariable String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -152,11 +171,13 @@ public class KubernetesController {
                 : ResponseEntity.badRequest().body("Namespace 삭제에 실패했습니다.");
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/cluster/info")
     public ResponseEntity<Map<String, Object>> getClusterInfo() {
         return ResponseEntity.ok(kubernetesFacade.getClusterInfo());
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityRoles.VIEWER + "','" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
         try {

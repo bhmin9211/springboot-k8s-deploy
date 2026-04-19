@@ -7,16 +7,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -26,6 +38,26 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public GrantedAuthoritiesMapper grantedAuthoritiesMapper() {
+        return authorities -> {
+            Set<GrantedAuthority> mappedAuthorities = new LinkedHashSet<>();
+
+            for (GrantedAuthority authority : authorities) {
+                mappedAuthorities.add(authority);
+
+                if (authority instanceof OidcUserAuthority oidcAuthority) {
+                    Map<String, Object> claims = oidcAuthority.getUserInfo() != null
+                            ? oidcAuthority.getUserInfo().getClaims()
+                            : oidcAuthority.getIdToken().getClaims();
+                    mappedAuthorities.addAll(extractKeycloakRoles(claims));
+                }
+            }
+
+            return mappedAuthorities;
+        };
     }
 
     @Bean
@@ -41,6 +73,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userAuthoritiesMapper(grantedAuthoritiesMapper()))
                         .successHandler(oAuth2LoginSuccessHandler)
                         .failureHandler(oAuth2LoginFailureHandler)
                 )
@@ -64,5 +97,54 @@ public class SecurityConfig {
                         )
                 )
                 .build();
+    }
+
+    private Collection<GrantedAuthority> extractKeycloakRoles(Map<String, Object> claims) {
+        Set<String> roles = new LinkedHashSet<>();
+        extractRolesFromRealmAccess(claims, roles);
+        extractRolesFromResourceAccess(claims, roles);
+
+        return roles.stream()
+                .map(String::trim)
+                .filter(role -> !role.isBlank())
+                .map(String::toUpperCase)
+                .map(SecurityRoles::asAuthority)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void extractRolesFromRealmAccess(Map<String, Object> claims, Set<String> roles) {
+        Object realmAccess = claims.get("realm_access");
+        if (!(realmAccess instanceof Map<?, ?> realmAccessMap)) {
+            return;
+        }
+
+        Object realmRoles = realmAccessMap.get("roles");
+        if (realmRoles instanceof Collection<?> roleValues) {
+            roleValues.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .forEach(roles::add);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void extractRolesFromResourceAccess(Map<String, Object> claims, Set<String> roles) {
+        Object resourceAccess = claims.get("resource_access");
+        if (!(resourceAccess instanceof Map<?, ?> resourceAccessMap)) {
+            return;
+        }
+
+        resourceAccessMap.values().stream()
+                .filter(Map.class::isInstance)
+                .map(Map.class::cast)
+                .map(access -> access.get("roles"))
+                .filter(Collection.class::isInstance)
+                .map(Collection.class::cast)
+                .forEach(roleValues -> ((Collection<?>) roleValues).stream()
+                        .filter(String.class::isInstance)
+                        .map(String.class::cast)
+                        .forEach(roles::add));
     }
 }

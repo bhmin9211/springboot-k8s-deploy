@@ -33,7 +33,7 @@
             <p class="section-title mb-1">{{ resourceTitle }}</p>
             <h3 class="mb-0">{{ filteredItems.length }} resources visible</h3>
           </div>
-          <span class="muted-copy">Read-only explorer</span>
+          <span class="muted-copy">{{ accessLabel }}</span>
         </div>
 
         <div class="table-responsive">
@@ -144,6 +144,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import api from '../axios'
+import { sessionState } from '../auth/session'
 
 const namespaces = ref([])
 const pods = ref([])
@@ -168,6 +169,20 @@ const resourceTitle = computed(() => {
     return 'Services'
   }
   return 'Pods'
+})
+
+const accessLabel = computed(() => {
+  const roles = sessionState.user?.roles || []
+  if (roles.includes('ADMIN')) {
+    return 'Admin access'
+  }
+  if (roles.includes('OPERATOR')) {
+    return 'Operator access'
+  }
+  if (roles.includes('VIEWER')) {
+    return 'Viewer access'
+  }
+  return 'Read-only explorer'
 })
 
 const filteredItems = computed(() => {

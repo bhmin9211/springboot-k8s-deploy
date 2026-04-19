@@ -2,11 +2,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.frontend.service.name }}
+  labels:
+    {{- include "springboot-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
 spec:
   type: {{ .Values.frontend.service.type }}
   selector:
-    app: {{ .Values.frontend.service.name }}
+    {{- include "springboot-app.frontendSelectorLabels" . | nindent 4 }}
   ports:
     - port: {{ .Values.frontend.service.port }}
       targetPort: {{ .Values.frontend.service.targetPort }}
-

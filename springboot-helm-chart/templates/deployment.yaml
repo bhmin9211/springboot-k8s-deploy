@@ -2,15 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
+  labels:
+    {{- include "springboot-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}
+      {{- include "springboot-app.backendSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}
+        {{- include "springboot-app.labels" . | nindent 8 }}
+        {{- include "springboot-app.backendSelectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}

@@ -7,16 +7,31 @@ const state = reactive({
   user: null
 })
 
+const normalizeRoles = (roles = []) =>
+  roles
+    .filter(Boolean)
+    .map(role => role.startsWith('ROLE_') ? role.slice(5) : role)
+    .map(role => role.toUpperCase())
+    .sort()
+
 const normalizeUser = (payload) => {
   if (!payload || payload.authenticated === false) {
     return null
   }
 
+  const roles = normalizeRoles(payload.roles || [])
+  const access = payload.access || {}
+
   return {
     username: payload.username || payload.name || 'unknown',
     email: payload.email || '',
     name: payload.name || '',
-    roles: payload.roles || []
+    roles,
+    access: {
+      canView: access.canView ?? roles.length > 0,
+      canOperate: access.canOperate ?? (roles.includes('OPERATOR') || roles.includes('ADMIN')),
+      canAdmin: access.canAdmin ?? roles.includes('ADMIN')
+    }
   }
 }
 

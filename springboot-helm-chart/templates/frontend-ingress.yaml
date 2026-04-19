@@ -3,6 +3,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.frontend.service.name }}-ingress
+  labels:
+    {{- include "springboot-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
 spec:
   ingressClassName: {{ .Values.ingress.ingressClassName }}
   rules:
@@ -17,4 +20,3 @@ spec:
                 port:
                   number: {{ .Values.frontend.service.port }}
 {{- end }}
-
