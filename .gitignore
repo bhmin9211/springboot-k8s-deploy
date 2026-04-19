@@ -36,6 +36,7 @@ springboot-app/out/
 # IDE
 .idea/
 *.iml
+.DS_Store
 
 # Node.js 의존성
 frontend/node_modules/
