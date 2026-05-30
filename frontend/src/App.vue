@@ -206,6 +206,91 @@ a {
   color: #07111f;
 }
 
+.ops-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ops-header {
+  padding: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ops-card {
+  padding: 1.25rem;
+}
+
+.ops-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ops-form-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: var(--text-subtle);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.detail-item {
+  padding: 0.9rem;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  min-width: 0;
+}
+
+.detail-item span,
+.detail-item strong {
+  display: block;
+}
+
+.detail-item span {
+  color: var(--text-subtle);
+  font-size: 0.78rem;
+  margin-bottom: 0.3rem;
+}
+
+.detail-item strong {
+  overflow-wrap: anywhere;
+}
+
+.log-cell {
+  max-width: 220px;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-subtle);
+  padding: 1.5rem;
+}
+
 @media (max-width: 991.98px) {
   .page-shell {
     padding: 1rem;
@@ -213,6 +298,17 @@ a {
 
   .sidebar-backdrop {
     display: block;
+  }
+
+  .ops-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ops-form-grid,
+  .ops-form-grid.compact,
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

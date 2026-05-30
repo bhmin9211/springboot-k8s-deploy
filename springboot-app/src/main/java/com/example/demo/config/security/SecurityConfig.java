@@ -49,10 +49,10 @@ public class SecurityConfig {
                 mappedAuthorities.add(authority);
 
                 if (authority instanceof OidcUserAuthority oidcAuthority) {
-                    Map<String, Object> claims = oidcAuthority.getUserInfo() != null
-                            ? oidcAuthority.getUserInfo().getClaims()
-                            : oidcAuthority.getIdToken().getClaims();
-                    mappedAuthorities.addAll(extractKeycloakRoles(claims));
+                    mappedAuthorities.addAll(extractKeycloakRoles(oidcAuthority.getIdToken().getClaims()));
+                    if (oidcAuthority.getUserInfo() != null) {
+                        mappedAuthorities.addAll(extractKeycloakRoles(oidcAuthority.getUserInfo().getClaims()));
+                    }
                 }
             }
 
@@ -69,7 +69,6 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login/**", "/auth/health", "/health/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**", "/error").permitAll()
                         .requestMatchers("/auth/me", "/auth/status", "/auth/logout").authenticated()
-                        .requestMatchers("/k8s/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2

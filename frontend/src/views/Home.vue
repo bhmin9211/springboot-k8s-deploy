@@ -164,9 +164,8 @@ const readCurrentUser = async () => {
 }
 
 const loadOverview = async () => {
-  const [clusterRes, podRes, deployRes, serviceRes, namespaceRes, apiHealthRes, dbHealthRes, k8sHealthRes] =
+  const [podRes, deployRes, serviceRes, namespaceRes, apiHealthRes, dbHealthRes, k8sHealthRes] =
     await Promise.allSettled([
-      api.get('/k8s/cluster/info'),
       api.get('/k8s/pods'),
       api.get('/k8s/deployments'),
       api.get('/k8s/services'),
@@ -176,9 +175,6 @@ const loadOverview = async () => {
       api.get('/k8s/health')
     ])
 
-  if (clusterRes.status === 'fulfilled') {
-    clusterInfo.value = clusterRes.value.data
-  }
   if (podRes.status === 'fulfilled') {
     pods.value = podRes.value.data
   }

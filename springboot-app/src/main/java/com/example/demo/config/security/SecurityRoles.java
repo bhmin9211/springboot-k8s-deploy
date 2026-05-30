@@ -20,6 +20,7 @@ public final class SecurityRoles {
         return authorities.stream()
                 .filter(authority -> authority.startsWith("ROLE_"))
                 .map(authority -> authority.substring("ROLE_".length()))
+                .map(String::toUpperCase)
                 .sorted()
                 .collect(Collectors.toList());
     }

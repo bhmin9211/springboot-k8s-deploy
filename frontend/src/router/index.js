@@ -5,10 +5,18 @@ import Home from '../views/Home.vue'
 import Cluster from '../views/Cluster.vue'
 import About from '../views/About.vue'
 import Login from '../views/Login.vue'
+import PaymentRequestListView from '../views/PaymentRequestListView.vue'
+import PaymentRequestDetailView from '../views/PaymentRequestDetailView.vue'
+import SettlementListView from '../views/SettlementListView.vue'
+import ReconciliationListView from '../views/ReconciliationListView.vue'
 
 const routes = [
   { path: '/', component: Home },
-  { path: '/cluster', component: Cluster, meta: { requiresAuth: true } },
+  { path: '/payment-requests', component: PaymentRequestListView },
+  { path: '/payment-requests/:id', component: PaymentRequestDetailView },
+  { path: '/settlements', component: SettlementListView },
+  { path: '/reconciliations', component: ReconciliationListView },
+  { path: '/cluster', component: Cluster },
   { path: '/about', component: About },
   { path: '/login', component: Login }
 ]

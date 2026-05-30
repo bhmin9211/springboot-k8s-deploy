@@ -1,135 +1,274 @@
-# Spring Boot + Vue GitOps Operations Dashboard
+# Payment Settlement Operations Dashboard
 
-## 프로젝트 소개
+## 프로젝트 개요
 
-이 프로젝트는 `Spring Boot + Vue` 기반으로 만든 운영형 플랫폼 포트폴리오입니다.  
-단순한 CRUD 애플리케이션이 아니라 `인증`, `운영 상태 가시화`, `역할 기반 접근 제어`, `GitOps 배포 흐름`을 하나의 제품 경험으로 보여주는 것을 목표로 합니다.
+결제성 업무 요청을 안전하게 접수하고, 운영자가 승인, 반려, 상태 이력, 감사로그, 정산 운영을 관리할 수 있도록 설계한 Java/Spring 기반 운영 백오피스 시스템입니다.
 
-사용자는 대시보드에서 서비스 상태와 배포 흐름을 확인할 수 있고, 프로젝트는 실제 운영 환경을 고려한 인증, 배포, 운영 구조를 함께 담도록 설계되어 있습니다.
+단순 CRUD가 아니라 실제 업무시스템에서 자주 발생하는 중복 요청, 잘못된 상태 변경, 운영자 승인 이력 누락, 장애 추적 어려움 같은 문제를 다루는 것을 목표로 합니다.
 
-## 프로젝트 목표
+기존 운영 대시보드 구조를 확장해 `Spring Boot + Vue + Keycloak + MariaDB` 기반 백오피스 흐름을 만들고, Docker, Helm, Kubernetes 배포 구성을 함께 포함했습니다.
 
-- Keycloak 기반 인증과 세션 중심 보안 구조 구현
-- Kubernetes 운영 상태를 확인할 수 있는 대시보드 제공
-- `VIEWER / OPERATOR / ADMIN` 역할 기반 확장 구조 설계
-- GitHub Actions, Docker, Helm을 연결한 GitOps 배포 흐름 표현
-- 공개 포트폴리오와 내부 운영 콘솔 성격을 함께 담은 아키텍처 구성
+## 개발 배경
 
-## 핵심 특징
+결제, 환불, 정산, 문서 발급 같은 업무 요청은 네트워크 재시도나 사용자 중복 클릭으로 같은 요청이 여러 번 들어올 수 있습니다. 또한 운영자가 승인, 반려, 재처리, 정산 확정 같은 행위를 수행할 때 누가 언제 어떤 상태를 바꾸었는지 추적할 수 있어야 합니다.
 
-- 프론트에서 토큰을 직접 저장하지 않는 `Spring Boot BFF + Session` 인증 구조
-- Kubernetes 리소스와 운영 상태를 시각적으로 확인할 수 있는 대시보드
-- 역할에 따라 기능과 접근 범위를 구분할 수 있는 권한 모델
-- 빌드부터 이미지 반영, 배포 버전 관리까지 이어지는 GitOps 중심 운영 흐름
-- 애플리케이션 개발, 배포 자동화, 운영 가시성을 하나의 흐름으로 설명할 수 있는 프로젝트 구성
+이 프로젝트는 이런 운영 업무의 핵심을 백엔드 관점에서 설계하고 구현합니다.
 
-## 기술 구성
+## 주요 기능
 
-### Frontend
+- 결제성 업무 요청 등록
+- `idempotencyKey` 기반 중복 요청 방지
+- 요청 상태 전이 관리
+- 운영자 승인/반려
+- 처리 성공/실패 및 실패 건 재처리
+- 상태 변경 이력 저장
+- 운영자 행위 감사로그 저장
+- 성공 거래 기반 정산 데이터 생성
+- 내부/외부 정산 결과 대사
+- Keycloak 기반 로그인 및 Role 기반 API 접근 제어
+- Kubernetes 운영 상태 조회 대시보드
+- Docker, Helm 기반 배포 구성
 
-- Vue 3
-- Vite
-- Vue Router
-- Axios
+## 핵심 설계 포인트
 
-### Backend
+### 멱등성
 
-- Java 17
-- Spring Boot 3
-- Spring Security
-- OAuth2 Client
-- JPA
+동일한 `idempotencyKey`가 이미 존재하면 새 요청을 만들지 않고 기존 요청의 처리 결과를 반환합니다. 애플리케이션 레벨의 선조회와 DB Unique Key를 함께 사용해 동시 요청 상황에서도 중복 저장을 방지합니다.
 
-### Infra / Delivery
+### 상태 전이
 
-- Docker
-- Docker Compose
-- Helm
-- GitHub Actions
-- Kubernetes
+요청 상태는 다음 흐름을 기준으로 관리합니다.
 
-## 배포 절차
+```text
+REQUESTED -> APPROVED -> PROCESSING -> SUCCESS -> SETTLED
+REQUESTED -> REJECTED
+PROCESSING -> FAILED -> RETRYING -> SUCCESS
+```
 
-이 프로젝트의 배포 흐름은 GitOps 관점에서 아래 단계로 설명됩니다.
+허용되지 않은 상태 변경은 예외 처리하고, 정상 상태 변경은 `PAYMENT_STATUS_HISTORIES` 테이블에 저장합니다.
 
-1. 개발자가 GitHub 저장소에 코드를 반영합니다.
-2. GitHub Actions가 프론트엔드와 백엔드 이미지를 빌드하고 레지스트리에 푸시합니다.
-3. 배포 워크플로우가 Helm values의 이미지 태그를 최신 커밋 기준으로 갱신합니다.
-4. Kubernetes 환경은 Git에 반영된 Helm values를 기준으로 새 버전을 동기화합니다.
-5. 대시보드는 현재 운영 상태와 배포 흐름을 함께 보여줍니다.
+### 감사로그
 
-이 과정을 통해 `코드 변경`, `이미지 빌드`, `배포 반영`, `운영 가시화`가 하나의 흐름으로 연결됩니다.
+요청 등록, 승인, 반려 같은 주요 운영 행위는 `AUDIT_LOGS` 테이블에 저장합니다. 감사로그에는 행위자, 액션 타입, 대상 타입, 대상 ID, 변경 전후 값, IP, 처리 시각을 기록합니다.
 
-## 아키텍처
+### 권한 관리
 
-프로젝트는 Vue 프론트엔드, Spring Boot 백엔드, Keycloak 인증, MariaDB 저장소, Kubernetes 배포 환경을 중심으로 구성됩니다.  
-배포 관점에서는 GitHub Actions, Container Registry, Helm values, Argo CD가 연결되어 GitOps 방식으로 운영됩니다.
+Keycloak에서 전달된 역할을 Spring Security 권한으로 매핑합니다.
 
-아래 다이어그램은 코드 반영부터 이미지 빌드, GitOps 동기화, 실제 서비스 실행까지의 전체 흐름을 보여줍니다.
+| 기능 | VIEWER | OPERATOR | ADMIN |
+|---|---:|---:|---:|
+| 요청 조회 | O | O | O |
+| 승인/반려 | X | O | O |
+| Kubernetes 상태 조회 | O | O | O |
+| Kubernetes 명령 실행 | X | O | O |
+
+## API 명세
+
+서버 기본 context path는 `/api`입니다.
+
+| Method | URL | 설명 | 권한 |
+|---|---|---|---|
+| POST | `/api/payment-requests` | 결제 요청 등록 | 공개/시스템 연동 |
+| GET | `/api/payment-requests` | 결제 요청 목록 조회 | VIEWER 이상 |
+| GET | `/api/payment-requests/{id}` | 결제 요청 상세 조회 | VIEWER 이상 |
+| POST | `/api/payment-requests/{id}/approve` | 결제 요청 승인 | OPERATOR 이상 |
+| POST | `/api/payment-requests/{id}/reject` | 결제 요청 반려 | OPERATOR 이상 |
+| POST | `/api/payment-requests/{id}/process` | 결제 요청 처리 시작 | OPERATOR 이상 |
+| POST | `/api/payment-requests/{id}/success` | 결제 요청 성공 처리 | OPERATOR 이상 |
+| POST | `/api/payment-requests/{id}/fail` | 결제 요청 실패 처리 | OPERATOR 이상 |
+| POST | `/api/payment-requests/{id}/retry` | 실패 건 재처리 | OPERATOR 이상 |
+| GET | `/api/payment-requests/{id}/histories` | 상태 변경 이력 조회 | VIEWER 이상 |
+| POST | `/api/settlements/generate` | 정산 데이터 생성 | OPERATOR 이상 |
+| GET | `/api/settlements` | 정산 목록 조회 | VIEWER 이상 |
+| GET | `/api/settlements/{id}` | 정산 상세 조회 | VIEWER 이상 |
+| POST | `/api/reconciliations` | 정산 대사 실행 | OPERATOR 이상 |
+| GET | `/api/reconciliations` | 대사 결과 조회 | VIEWER 이상 |
+| GET | `/api/reconciliations/mismatches` | 대사 불일치 조회 | VIEWER 이상 |
+| GET | `/api/audit-logs` | 감사로그 조회 | VIEWER 이상 |
+| GET | `/api/k8s/cluster/info` | Kubernetes 클러스터 정보 조회 | VIEWER 이상 |
+| GET | `/api/k8s/pods` | Pod 목록 조회 | VIEWER 이상 |
+
+### 요청 등록 예시
+
+```http
+POST /api/payment-requests
+Content-Type: application/json
+
+{
+  "idempotencyKey": "PAY-ORDER-20260530-0001",
+  "amount": 120000,
+  "requestedBy": "external-order-api"
+}
+```
+
+### 반려 예시
+
+```http
+POST /api/payment-requests/1/reject
+Content-Type: application/json
+
+{
+  "reason": "요청 금액과 증빙 금액이 일치하지 않습니다."
+}
+```
+
+## ERD
+
+```mermaid
+erDiagram
+    PAYMENT_REQUESTS ||--o{ PAYMENT_STATUS_HISTORIES : has
+    PAYMENT_REQUESTS ||--o{ AUDIT_LOGS : audited_by_target
+    PAYMENT_REQUESTS ||--o| SETTLEMENTS : settled_as
+    SETTLEMENTS ||--o{ RECONCILIATION_RESULTS : reconciled_by
+
+    PAYMENT_REQUESTS {
+        BIGINT ID PK
+        VARCHAR IDEMPOTENCY_KEY UK
+        VARCHAR REQUEST_NO UK
+        DECIMAL AMOUNT
+        VARCHAR STATUS
+        VARCHAR REQUESTED_BY
+        VARCHAR APPROVED_BY
+        DATETIME APPROVED_AT
+        VARCHAR REJECTED_BY
+        DATETIME REJECTED_AT
+        VARCHAR REJECT_REASON
+        VARCHAR FAILURE_REASON
+        INT RETRY_COUNT
+        DATETIME CREATED_AT
+        DATETIME UPDATED_AT
+    }
+
+    PAYMENT_STATUS_HISTORIES {
+        BIGINT ID PK
+        BIGINT PAYMENT_REQUEST_ID FK
+        VARCHAR FROM_STATUS
+        VARCHAR TO_STATUS
+        VARCHAR REASON
+        VARCHAR CHANGED_BY
+        DATETIME CREATED_AT
+    }
+
+    AUDIT_LOGS {
+        BIGINT ID PK
+        VARCHAR ACTOR_ID
+        VARCHAR ACTION_TYPE
+        VARCHAR TARGET_TYPE
+        BIGINT TARGET_ID
+        TEXT BEFORE_VALUE
+        TEXT AFTER_VALUE
+        VARCHAR IP_ADDRESS
+        DATETIME CREATED_AT
+    }
+
+    SETTLEMENTS {
+        BIGINT ID PK
+        BIGINT PAYMENT_REQUEST_ID FK
+        DECIMAL GROSS_AMOUNT
+        DECIMAL FEE_AMOUNT
+        DECIMAL SETTLEMENT_AMOUNT
+        VARCHAR SETTLEMENT_STATUS
+        DATE SETTLEMENT_DUE_DATE
+        DATETIME CREATED_AT
+        DATETIME UPDATED_AT
+    }
+
+    RECONCILIATION_RESULTS {
+        BIGINT ID PK
+        BIGINT SETTLEMENT_ID FK
+        VARCHAR EXTERNAL_TRANSACTION_ID
+        DECIMAL INTERNAL_AMOUNT
+        DECIMAL EXTERNAL_AMOUNT
+        VARCHAR INTERNAL_STATUS
+        VARCHAR EXTERNAL_STATUS
+        VARCHAR RESULT_TYPE
+        VARCHAR MISMATCH_REASON
+        DATETIME CREATED_AT
+    }
+```
+
+## 시스템 아키텍처
 
 ```mermaid
 flowchart TD
-    Dev[Developer]
-    GitHub[GitHub Repository]
-    Actions[GitHub Actions]
-    Registry[Container Registry]
-    HelmValues[Helm values]
-    ArgoCDApp[Argo CD Application]
-    ArgoCDSync[Argo CD Sync Controller]
-    K8s[Kubernetes Cluster]
-    FrontendIngress[Frontend Ingress]
-    ApiIngress[API Ingress]
-    FrontendService[Frontend Service]
-    BackendService[Backend Service]
-    FrontendDeploy[Frontend Deployment]
-    BackendDeploy[Backend Deployment]
-    Frontend[Vue Dashboard Pod]
-    Backend[Spring Boot API Pod]
+    Operator[Operator]
+    External[External System]
+    Frontend[Vue Backoffice]
+    Backend[Spring Boot API]
     Keycloak[Keycloak]
     MariaDB[MariaDB]
+    K8s[Kubernetes]
+    Helm[Helm Chart]
+    Actions[GitHub Actions]
 
-    Dev -->|1. git push| GitHub
-    GitHub -->|2. workflow trigger| Actions
-
-    subgraph BuildAndRelease[Build and Release]
-        Actions -->|3. build and push images| Registry
-        Actions -->|4. update image tag| HelmValues
-        Actions -->|5. commit release metadata| GitHub
-    end
-
-    subgraph GitOpsSync[GitOps Sync]
-        HelmValues -->|6. GitOps source| ArgoCDApp
-        Registry -->|7. image pull| K8s
-        ArgoCDApp -->|7. manage desired state| ArgoCDSync
-        ArgoCDSync -->|8. sync manifests| K8s
-    end
-
-    subgraph Runtime[Runtime]
-        K8s -->|9. expose dashboard host| FrontendIngress
-        K8s -->|10. expose api host| ApiIngress
-        FrontendIngress -->|11. route traffic| FrontendService
-        ApiIngress -->|12. route traffic| BackendService
-        FrontendService -->|13. select pods| FrontendDeploy
-        BackendService -->|14. select pods| BackendDeploy
-        FrontendDeploy -->|15. run pod| Frontend
-        BackendDeploy -->|16. run pod| Backend
-        Frontend -->|17. session API call| Backend
-        Backend -->|18. oauth2 and session auth| Keycloak
-        Backend -->|19. application data| MariaDB
-    end
+    Operator --> Frontend
+    External --> Backend
+    Frontend --> Backend
+    Backend --> Keycloak
+    Backend --> MariaDB
+    Backend --> K8s
+    Actions --> Helm
+    Helm --> K8s
 ```
 
-아키텍처 기준 핵심 포인트:
+## 기술 스택
 
-- 프론트는 세션 기반으로 백엔드 API를 호출하고, 인증은 Keycloak과 Spring Boot가 담당합니다.
-- 백엔드는 운영 상태 조회와 보호된 API를 제공하는 중심 계층 역할을 합니다.
-- GitHub Actions는 이미지 빌드와 배포 버전 갱신을 담당합니다.
-- Helm values와 Argo CD는 Git 상태를 실제 Kubernetes 환경에 반영하는 기준점 역할을 합니다.
-- Kubernetes 내부 리소스는 `Ingress -> Service -> Deployment -> Pod` 흐름으로 연결됩니다.
+| 영역 | 기술 |
+|---|---|
+| Backend | Java 17, Spring Boot 3, Spring Security, JPA |
+| Frontend | Vue 3, Vite, Vue Router, Axios |
+| Auth | Keycloak, OAuth2 Login, Session |
+| DB | MariaDB |
+| Infra | Docker, Docker Compose, Helm, Kubernetes |
+| CI/CD | GitHub Actions |
 
-## 기대하는 프로젝트 인상
+## Frontend
 
-이 프로젝트는 단순히 화면과 API를 구현한 수준이 아니라,  
-실제 서비스 운영에 필요한 인증 구조, 배포 자동화, 운영 가시성을 함께 고려한 포트폴리오를 지향합니다.
+프론트엔드는 백엔드 API의 운영 흐름을 확인하기 위한 Vue 기반 관리자 화면입니다. 화려한 UI보다 운영자가 실제로 수행하는 업무 흐름을 보여주는 것을 목표로 합니다.
 
-즉 `애플리케이션 개발`, `운영 관점의 대시보드 설계`, `GitOps 기반 배포 흐름`을 하나로 연결해 보여주는 프로젝트입니다.
+| 화면 | 설명 |
+|---|---|
+| 결제 요청 목록 | 요청 목록 조회, 상태별 필터링, 신규 요청 등록, 상세 이동 |
+| 결제 요청 상세 | 승인, 반려, 처리 시작, 성공/실패 처리, 재처리, 상태 이력, 감사로그 확인 |
+| 정산 목록 | 성공 거래 기준 정산 데이터 조회 및 생성 |
+| 대사 결과 | 내부/외부 정산 결과 비교 및 불일치 건 조회 |
+
+## 실행 방법
+
+### Backend
+
+```bash
+cd springboot-app
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### DB 스키마
+
+MariaDB에 아래 SQL을 적용합니다.
+
+```text
+springboot-app/src/main/resources/sql/payment_settlement.sql
+```
+
+## 구현 현황
+
+- 완료: 결제 요청 등록
+- 완료: 멱등키 기반 중복 요청 방지
+- 완료: 승인/반려 상태 전이
+- 완료: 처리/성공/실패/재처리 상태 전이
+- 완료: 상태 변경 이력
+- 완료: 감사로그 저장/조회
+- 완료: 정산 데이터 생성/조회
+- 완료: 정산 대사 및 불일치 조회
+- 완료: Keycloak Role 기반 보호 API 구조
+- 완료: Vue 관리자 화면의 결제 요청 목록/상세/상태 변경 액션
+- 완료: 정산/대사 화면
+- 진행 예정: 서비스 테스트 코드

@@ -1,10 +1,10 @@
 <template>
   <aside :class="['sidebar-shell', { 'sidebar-open': sidebarOpen }]">
     <div class="sidebar-brand">
-      <div class="brand-mark">K8</div>
+      <div class="brand-mark">PS</div>
       <div>
-        <p class="brand-title">KubeOps Dashboard</p>
-        <p class="brand-subtitle">GitOps Portfolio</p>
+        <p class="brand-title">Payment Ops</p>
+        <p class="brand-subtitle">Settlement Backoffice</p>
       </div>
     </div>
 
@@ -27,10 +27,10 @@
     </div>
 
     <div class="sidebar-card glass-panel">
-      <p class="section-title mb-2">Public Demo</p>
-      <h3 class="card-title">Read-only mode first</h3>
+      <p class="section-title mb-2">Portfolio Focus</p>
+      <h3 class="card-title">업무 흐름 중심</h3>
       <p class="muted-copy small mb-0">
-        Kubernetes command APIs stay disabled in public deployments while monitoring views remain open.
+        요청 접수, 승인, 정산, 대사, 감사로그 흐름을 한 프로젝트에서 확인합니다.
       </p>
     </div>
   </aside>
@@ -47,10 +47,13 @@ defineProps({
 defineEmits(['navigate'])
 
 const navigation = [
-  { to: '/', label: 'Overview', caption: 'Cluster summary', icon: '01' },
-  { to: '/cluster', label: 'Cluster', caption: 'Pods and services', icon: '02' },
-  { to: '/login', label: 'Login', caption: 'Session access', icon: '03' },
-  { to: '/about', label: 'About', caption: 'Project story', icon: '04' }
+  { to: '/', label: 'Overview', caption: 'Project summary', icon: '01' },
+  { to: '/payment-requests', label: 'Requests', caption: 'Approve and retry', icon: '02' },
+  { to: '/settlements', label: 'Settlements', caption: 'Generate payouts', icon: '03' },
+  { to: '/reconciliations', label: 'Reconcile', caption: 'Find mismatches', icon: '04' },
+  { to: '/cluster', label: 'Cluster', caption: 'Ops visibility', icon: '05' },
+  { to: '/login', label: 'Login', caption: 'Session access', icon: '06' },
+  { to: '/about', label: 'About', caption: 'Project story', icon: '07' }
 ]
 </script>
 

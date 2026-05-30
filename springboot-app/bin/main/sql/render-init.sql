@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS USERS (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    role VARCHAR(20) DEFAULT 'USER',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO USERS (username, password, role)
+SELECT 'demo',
+       '$2a$10$Jj18gd1ygLics1ppgCXZRua5kh1SbViFjW9Fimj39QHkU7GT2Pw6K',
+       'USER'
+WHERE NOT EXISTS (
+    SELECT 1 FROM USERS WHERE username = 'demo'
+);

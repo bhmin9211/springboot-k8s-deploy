@@ -11,6 +11,7 @@ services:
     volumes:
       - mariadb_local_data:/var/lib/mysql
       - ./springboot-app/src/main/resources/sql/render-init.sql:/docker-entrypoint-initdb.d/01-render-init.sql:ro
+      - ./springboot-app/src/main/resources/sql/payment_settlement.sql:/docker-entrypoint-initdb.d/02-payment-settlement.sql:ro
 
   keycloak-db:
     image: postgres:16-alpine
@@ -30,7 +31,7 @@ services:
     command:
       - start-dev
       - --import-realm
-      - --hostname=http://host.docker.internal:8090
+      - --hostname=http://localhost:8090
       - --http-enabled=true
       - --hostname-strict=false
     environment:
@@ -59,10 +60,13 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/k8s_dashboard
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 1234
-      APP_CORS_ALLOWED_ORIGINS: http://localhost:3000
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
       APP_SECURITY_FRONTEND_BASE_URL: http://localhost:3000
       APP_KUBERNETES_COMMANDS_ENABLED: true
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: http://host.docker.internal:8090/realms/kubeops-local
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: http://localhost:8090/realms/kubeops-local/protocol/openid-connect/auth
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: http://host.docker.internal:8090/realms/kubeops-local/protocol/openid-connect/token
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8090/realms/kubeops-local/protocol/openid-connect/certs
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: http://host.docker.internal:8090/realms/kubeops-local/protocol/openid-connect/userinfo
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID: kubeops-web
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET: kubeops-local-secret
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SCOPE: openid,profile,email
