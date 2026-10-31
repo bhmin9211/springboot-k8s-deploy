@@ -28,6 +28,7 @@ import java.util.Map;
 @RequestMapping("/k8s")
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize(SecurityRoles.HAS_VIEWER)
 public class KubernetesController {
 
     private final KubernetesFacade kubernetesFacade;
@@ -49,7 +50,7 @@ public class KubernetesController {
         return pod != null ? ResponseEntity.ok(pod) : ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_ADMIN)
     @DeleteMapping("/namespaces/{namespace}/pods/{name}")
     public ResponseEntity<String> deletePod(@PathVariable String namespace, @PathVariable String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -88,7 +89,7 @@ public class KubernetesController {
         return deployment != null ? ResponseEntity.ok(deployment) : ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PutMapping("/namespaces/{namespace}/deployments/{name}/scale")
     public ResponseEntity<String> scaleDeployment(@PathVariable String namespace,
                                                   @PathVariable String name,
@@ -118,7 +119,7 @@ public class KubernetesController {
         return service != null ? ResponseEntity.ok(service) : ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_ADMIN)
     @DeleteMapping("/namespaces/{namespace}/services/{name}")
     public ResponseEntity<String> deleteService(@PathVariable String namespace, @PathVariable String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -135,7 +136,7 @@ public class KubernetesController {
         return ResponseEntity.ok(kubernetesFacade.getAllNamespaces());
     }
 
-    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_ADMIN)
     @PostMapping("/namespaces")
     public ResponseEntity<String> createNamespace(@RequestParam String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();
@@ -147,7 +148,7 @@ public class KubernetesController {
                 : ResponseEntity.badRequest().body("Namespace 생성에 실패했습니다.");
     }
 
-    @PreAuthorize("hasRole('" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_ADMIN)
     @DeleteMapping("/namespaces/{name}")
     public ResponseEntity<String> deleteNamespace(@PathVariable String name) {
         ResponseEntity<String> blocked = commandBlockedResponse();

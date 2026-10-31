@@ -2,9 +2,8 @@
   <section class="ops-stack">
     <div class="glass-panel ops-header">
       <div>
-        <p class="section-title mb-1">Payment Request Detail</p>
-        <h2 class="mb-1">요청 상세 #{{ id }}</h2>
-        <p class="muted-copy mb-0">상태 변경, 이력, 감사로그를 한 화면에서 확인합니다.</p>
+        <h2 class="mb-1">{{ request?.requestNo || `요청 ${id}` }}</h2>
+        <p class="muted-copy mb-0">상태, 변경 이력, 감사 로그를 이 화면에서 확인합니다.</p>
       </div>
       <router-link to="/payment-requests" class="btn btn-outline-secondary">목록으로</router-link>
     </div>
@@ -35,7 +34,6 @@
       <div class="glass-panel ops-card">
         <div class="card-head">
           <div>
-            <p class="section-title mb-1">Status Histories</p>
             <h3 class="mb-0">상태 변경 이력</h3>
           </div>
         </div>
@@ -43,20 +41,20 @@
           <table class="table-surface">
             <thead>
               <tr>
-                <th>From</th>
-                <th>To</th>
-                <th>Reason</th>
-                <th>Changed By</th>
-                <th>Created</th>
+                <th>이전</th>
+                <th>이후</th>
+                <th>사유</th>
+                <th>변경자</th>
+                <th>일시</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="history in histories" :key="history.id">
-                <td>{{ history.fromStatus || '-' }}</td>
-                <td>{{ history.toStatus }}</td>
+                <td>{{ paymentStatusLabel(history.fromStatus) }}</td>
+                <td>{{ paymentStatusLabel(history.toStatus) }}</td>
                 <td>{{ history.reason || '-' }}</td>
                 <td>{{ history.changedBy }}</td>
-                <td>{{ history.createdAt }}</td>
+                <td>{{ formatDateTime(history.createdAt) }}</td>
               </tr>
               <tr v-if="!histories.length">
                 <td colspan="5" class="empty-state">상태 이력이 없습니다.</td>
@@ -69,21 +67,20 @@
       <div class="glass-panel ops-card">
         <div class="card-head">
           <div>
-            <p class="section-title mb-1">Audit Logs</p>
-            <h3 class="mb-0">감사로그</h3>
+            <h3 class="mb-0">감사 로그</h3>
           </div>
         </div>
         <div class="table-responsive">
           <table class="table-surface">
             <thead>
               <tr>
-                <th>Action</th>
-                <th>Target</th>
-                <th>Actor</th>
-                <th>Before</th>
-                <th>After</th>
+                <th>동작</th>
+                <th>대상</th>
+                <th>수행자</th>
+                <th>이전</th>
+                <th>이후</th>
                 <th>IP</th>
-                <th>Created</th>
+                <th>일시</th>
               </tr>
             </thead>
             <tbody>
@@ -94,7 +91,7 @@
                 <td class="log-cell">{{ log.beforeValue || '-' }}</td>
                 <td class="log-cell">{{ log.afterValue || '-' }}</td>
                 <td>{{ log.ipAddress || '-' }}</td>
-                <td>{{ log.createdAt }}</td>
+                <td>{{ formatDateTime(log.createdAt) }}</td>
               </tr>
               <tr v-if="!auditLogs.length">
                 <td colspan="7" class="empty-state">감사로그가 없습니다.</td>
@@ -122,6 +119,8 @@ import {
   retryPaymentRequest,
   successPaymentRequest
 } from '../api/paymentRequestApi'
+import { formatDateTime } from '../formatDate'
+import { paymentStatusLabel } from '../labels'
 
 const route = useRoute()
 const id = route.params.id
@@ -136,17 +135,17 @@ const detailItems = computed(() => [
   { label: '요청번호', value: request.value.requestNo },
   { label: '멱등키', value: request.value.idempotencyKey },
   { label: '금액', value: Number(request.value.amount || 0).toLocaleString() },
-  { label: '상태', value: request.value.status },
+  { label: '상태', value: paymentStatusLabel(request.value.status) },
   { label: '요청자', value: request.value.requestedBy },
   { label: '승인자', value: request.value.approvedBy },
-  { label: '승인일시', value: request.value.approvedAt },
+  { label: '승인일시', value: formatDateTime(request.value.approvedAt) },
   { label: '반려자', value: request.value.rejectedBy },
-  { label: '반려일시', value: request.value.rejectedAt },
+  { label: '반려일시', value: formatDateTime(request.value.rejectedAt) },
   { label: '반려사유', value: request.value.rejectReason },
   { label: '실패사유', value: request.value.failureReason },
   { label: '재처리횟수', value: request.value.retryCount },
-  { label: '생성일시', value: request.value.createdAt },
-  { label: '수정일시', value: request.value.updatedAt }
+  { label: '생성일시', value: formatDateTime(request.value.createdAt) },
+  { label: '수정일시', value: formatDateTime(request.value.updatedAt) }
 ])
 
 const terminalStatus = computed(() => ['SUCCESS', 'SETTLED', 'REJECTED'].includes(request.value?.status))

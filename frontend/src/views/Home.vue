@@ -2,29 +2,25 @@
   <section class="overview-grid">
     <div class="hero-card glass-panel">
       <div class="hero-copy">
-        <p class="section-title">Kubernetes + GitOps</p>
-        <h2 class="hero-title">운영 상태와 배포 흐름을 한 화면에 담는 DevOps 포트폴리오</h2>
+        <p class="section-title">결제 운영</p>
+        <h2 class="hero-title">승인할 건부터 봅니다</h2>
         <p class="muted-copy hero-text">
-          Spring Boot, Vue, Helm, Argo CD를 연결해 만든 공개형 대시보드입니다. 실제 API가 연결되면
-          클러스터 상태와 인증 흐름이 함께 반영됩니다.
+          성공한 요청만 정산할 수 있습니다.
         </p>
         <div class="hero-actions">
-          <router-link to="/cluster" class="btn btn-accent px-4 py-3">Explore Cluster</router-link>
-          <router-link to="/about" class="ghost-link">Read Project Story</router-link>
+          <router-link to="/payment-requests" class="btn btn-accent px-4 py-2">요청 보기</router-link>
+          <router-link to="/settlements" class="ghost-link">정산 보기</router-link>
         </div>
       </div>
 
-      <div class="hero-status glass-panel">
-        <p class="section-title mb-2">Connection Status</p>
+      <div class="hero-status">
+        <p class="section-title mb-2">연결</p>
         <div class="status-stack">
           <div :class="['status-pill', apiStatus.ok ? 'status-ok' : 'status-down']">
-            API {{ apiStatus.label }}
+            API {{ apiStatus.ok ? '정상' : '끊김' }}
           </div>
           <div :class="['status-pill', dbStatus.ok ? 'status-ok' : 'status-warn']">
-            DB {{ dbStatus.label }}
-          </div>
-          <div :class="['status-pill', k8sStatus.ok ? 'status-ok' : 'status-warn']">
-            K8s {{ k8sStatus.label }}
+            DB {{ dbStatus.ok ? '정상' : '확인 필요' }}
           </div>
         </div>
       </div>
@@ -41,58 +37,38 @@
     <div class="table-card glass-panel">
       <div class="card-head">
         <div>
-          <p class="section-title mb-1">Recent Pods</p>
-          <h3 class="mb-0">실시간 워크로드 상태</h3>
+          <h3 class="mb-0">최근 요청</h3>
         </div>
-        <router-link to="/cluster" class="ghost-link">Open Cluster View</router-link>
+        <router-link to="/payment-requests" class="ghost-link">전체 목록</router-link>
       </div>
       <div class="table-responsive">
         <table class="table-surface">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Namespace</th>
-              <th>Restarts</th>
-              <th>Node</th>
+              <th>요청번호</th>
+              <th>금액</th>
+              <th>상태</th>
+              <th>요청자</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="pod in topPods" :key="pod.name">
-              <td>{{ pod.name }}</td>
+            <tr v-for="request in recentRequests" :key="request.id">
               <td>
-                <span :class="['status-pill', podStatusClass(pod.status)]">{{ pod.status || 'Unknown' }}</span>
+                <router-link :to="`/payment-requests/${request.id}`">{{ request.requestNo }}</router-link>
               </td>
-              <td>{{ pod.namespace || '-' }}</td>
-              <td>{{ pod.restartCount || '0' }}</td>
-              <td>{{ pod.nodeName || '-' }}</td>
+              <td>{{ Number(request.amount || 0).toLocaleString() }}</td>
+              <td>
+                <span :class="['status-pill', statusClass(request.status)]">{{ paymentStatusLabel(request.status) }}</span>
+              </td>
+              <td>{{ request.requestedBy }}</td>
             </tr>
-            <tr v-if="!topPods.length">
-              <td colspan="5" class="empty-state">
-                백엔드가 연결되면 Pod 상태가 여기에 표시됩니다.
+            <tr v-if="!recentRequests.length">
+              <td colspan="4" class="empty-state">
+                {{ user ? '등록된 요청이 없습니다.' : '로그인하면 요청 목록이 보입니다.' }}
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-    </div>
-
-    <div class="pipeline-card glass-panel">
-      <div class="card-head">
-        <div>
-          <p class="section-title mb-1">Delivery Flow</p>
-          <h3 class="mb-0">GitOps Delivery Pipeline</h3>
-        </div>
-      </div>
-
-      <div class="pipeline-steps">
-        <div v-for="step in pipelineSteps" :key="step.title" class="pipeline-step">
-          <span class="step-index">{{ step.index }}</span>
-          <div>
-            <strong>{{ step.title }}</strong>
-            <p class="muted-copy mb-0">{{ step.caption }}</p>
-          </div>
-        </div>
       </div>
     </div>
   </section>
@@ -101,58 +77,23 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import api from '../axios'
+import { paymentStatusLabel } from '../labels'
 
-const clusterInfo = ref({})
-const pods = ref([])
-const deployments = ref([])
-const services = ref([])
-const namespaces = ref([])
+const requests = ref([])
 const user = ref(null)
-const apiStatus = ref({ ok: false, label: 'Offline' })
-const dbStatus = ref({ ok: false, label: 'Unknown' })
-const k8sStatus = ref({ ok: false, label: 'Unknown' })
+const apiStatus = ref({ ok: false })
+const dbStatus = ref({ ok: false })
+
+const countStatus = (status) => requests.value.filter(request => request.status === status).length
 
 const metrics = computed(() => [
-  {
-    label: 'Pods',
-    value: clusterInfo.value.podCount ?? pods.value.length ?? 0,
-    note: 'running workloads'
-  },
-  {
-    label: 'Deployments',
-    value: clusterInfo.value.deploymentCount ?? deployments.value.length ?? 0,
-    note: 'release units'
-  },
-  {
-    label: 'Services',
-    value: clusterInfo.value.serviceCount ?? services.value.length ?? 0,
-    note: 'traffic endpoints'
-  },
-  {
-    label: 'Namespaces',
-    value: clusterInfo.value.namespaceCount ?? namespaces.value.length ?? 0,
-    note: 'isolated scopes'
-  },
-  {
-    label: 'Nodes',
-    value: clusterInfo.value.nodeCount ?? 0,
-    note: 'cluster capacity'
-  },
-  {
-    label: 'User',
-    value: user.value?.username || 'Guest',
-    note: user.value ? 'authenticated session' : 'public visitor'
-  }
+  { label: '승인 대기', value: user.value ? countStatus('REQUESTED') : '-', note: '아직 승인 전' },
+  { label: '처리 중', value: user.value ? countStatus('PROCESSING') + countStatus('RETRYING') : '-', note: '외부 처리' },
+  { label: '정산 대기', value: user.value ? countStatus('SUCCESS') : '-', note: '정산 생성 가능' },
+  { label: '정산 완료', value: user.value ? countStatus('SETTLED') : '-', note: '정산 데이터 있음' }
 ])
 
-const topPods = computed(() => pods.value.slice(0, 5))
-
-const pipelineSteps = [
-  { index: '01', title: 'Git Push', caption: '코드 변경이 저장소로 올라갑니다.' },
-  { index: '02', title: 'GitHub Actions', caption: '이미지 빌드와 태그 업데이트가 실행됩니다.' },
-  { index: '03', title: 'Helm Update', caption: '릴리즈 값이 갱신됩니다.' },
-  { index: '04', title: 'Argo CD Sync', caption: 'Git 상태와 클러스터 상태를 맞춥니다.' }
-]
+const recentRequests = computed(() => requests.value.slice(0, 5))
 
 const readCurrentUser = async () => {
   try {
@@ -164,205 +105,33 @@ const readCurrentUser = async () => {
 }
 
 const loadOverview = async () => {
-  const [podRes, deployRes, serviceRes, namespaceRes, apiHealthRes, dbHealthRes, k8sHealthRes] =
-    await Promise.allSettled([
-      api.get('/k8s/pods'),
-      api.get('/k8s/deployments'),
-      api.get('/k8s/services'),
-      api.get('/k8s/namespaces'),
-      api.get('/auth/health'),
-      api.get('/health/healthcheck'),
-      api.get('/k8s/health')
-    ])
+  const [apiHealthRes, dbHealthRes, paymentRes] = await Promise.allSettled([
+    api.get('/auth/health'),
+    api.get('/health/healthcheck'),
+    user.value ? api.get('/payment-requests') : Promise.resolve(null)
+  ])
 
-  if (podRes.status === 'fulfilled') {
-    pods.value = podRes.value.data
+  apiStatus.value = { ok: apiHealthRes.status === 'fulfilled' }
+  dbStatus.value = {
+    ok: dbHealthRes.status === 'fulfilled' && dbHealthRes.value.data === 'OK'
   }
-  if (deployRes.status === 'fulfilled') {
-    deployments.value = deployRes.value.data
-  }
-  if (serviceRes.status === 'fulfilled') {
-    services.value = serviceRes.value.data
-  }
-  if (namespaceRes.status === 'fulfilled') {
-    namespaces.value = namespaceRes.value.data
-  }
-
-  apiStatus.value = apiHealthRes.status === 'fulfilled'
-    ? { ok: true, label: 'Healthy' }
-    : { ok: false, label: 'Offline' }
-
-  dbStatus.value = dbHealthRes.status === 'fulfilled' && dbHealthRes.value.data === 'OK'
-    ? { ok: true, label: 'Healthy' }
-    : { ok: false, label: 'Check required' }
-
-  k8sStatus.value = k8sHealthRes.status === 'fulfilled'
-    ? { ok: true, label: 'Connected' }
-    : { ok: false, label: 'Waiting' }
+  requests.value = paymentRes.status === 'fulfilled' && paymentRes.value
+    ? paymentRes.value.data
+    : []
 }
 
-const podStatusClass = (status) => {
-  if (!status) {
-    return 'status-warn'
-  }
-  const value = status.toLowerCase()
-  if (value.includes('running') || value.includes('ready')) {
+const statusClass = (status) => {
+  if (['SUCCESS', 'SETTLED'].includes(status)) {
     return 'status-ok'
   }
-  if (value.includes('pending')) {
-    return 'status-warn'
+  if (['FAILED', 'REJECTED'].includes(status)) {
+    return 'status-down'
   }
-  return 'status-down'
+  return 'status-warn'
 }
 
 onMounted(async () => {
-  await Promise.all([loadOverview(), readCurrentUser()])
+  await readCurrentUser()
+  await loadOverview()
 })
 </script>
-
-<style scoped>
-.overview-grid {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.hero-card {
-  padding: 1.5rem;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
-}
-
-.hero-title {
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  line-height: 1.05;
-  margin-bottom: 1rem;
-}
-
-.hero-text {
-  max-width: 60ch;
-  font-size: 1rem;
-}
-
-.hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.ghost-link {
-  color: #b8d8ee;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.hero-status {
-  padding: 1.25rem;
-  background: rgba(7, 14, 28, 0.72);
-}
-
-.status-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.metric-card,
-.table-card,
-.pipeline-card {
-  padding: 1.25rem;
-}
-
-.metric-label {
-  margin-bottom: 0.5rem;
-  color: var(--text-subtle);
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.metric-value {
-  display: block;
-  font-size: 1.8rem;
-  margin-bottom: 0.4rem;
-}
-
-.metric-note {
-  color: #86a3bf;
-  font-size: 0.9rem;
-}
-
-.card-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.empty-state {
-  color: var(--text-subtle);
-  text-align: center;
-  padding: 1.6rem 1rem;
-}
-
-.pipeline-steps {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.pipeline-step {
-  padding: 1rem;
-  border-radius: 18px;
-  background: rgba(148, 163, 184, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.step-index {
-  display: inline-flex;
-  margin-bottom: 0.9rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(76, 201, 240, 0.12);
-  color: var(--accent);
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-@media (max-width: 1199.98px) {
-  .metrics-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 991.98px) {
-  .hero-card {
-    grid-template-columns: 1fr;
-  }
-
-  .pipeline-steps {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .metrics-grid,
-  .pipeline-steps {
-    grid-template-columns: 1fr;
-  }
-
-  .card-head {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-</style>

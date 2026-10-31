@@ -1,14 +1,16 @@
 package com.example.demo.config.security;
 
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,8 +19,13 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -31,6 +38,8 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final Set<String> APPLICATION_ROLES = Set.of("VIEWER", "OPERATOR", "ADMIN");
 
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
@@ -64,12 +73,21 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login/**", "/auth/health", "/health/**").permitAll()
+                        .requestMatchers("/auth/login/**", "/auth/health", "/auth/csrf", "/health/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**", "/error").permitAll()
-                        .requestMatchers("/auth/me", "/auth/status", "/auth/logout").authenticated()
-                        .anyRequest().permitAll()
+                        .requestMatchers(HttpMethod.GET, "/payment-requests", "/payment-requests/**").hasAnyRole(SecurityRoles.VIEWER, SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers("/payment-requests", "/payment-requests/**").hasAnyRole(SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers(HttpMethod.GET, "/settlements", "/settlements/**").hasAnyRole(SecurityRoles.VIEWER, SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers("/settlements", "/settlements/**").hasAnyRole(SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers(HttpMethod.GET, "/reconciliations", "/reconciliations/**").hasAnyRole(SecurityRoles.VIEWER, SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers("/reconciliations", "/reconciliations/**").hasAnyRole(SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers(HttpMethod.GET, "/audit-logs", "/audit-logs/**").hasAnyRole(SecurityRoles.VIEWER, SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers(HttpMethod.GET, "/k8s", "/k8s/**").hasAnyRole(SecurityRoles.VIEWER, SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/k8s", "/k8s/**").hasAnyRole(SecurityRoles.OPERATOR, SecurityRoles.ADMIN)
+                        .requestMatchers("/k8s", "/k8s/**").hasRole(SecurityRoles.ADMIN)
+                        .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userAuthoritiesMapper(grantedAuthoritiesMapper()))
@@ -78,24 +96,32 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .exceptionHandling(ex -> ex
-                        .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                new AntPathRequestMatcher("/k8s/**")
-                        )
-                        .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                new AntPathRequestMatcher("/auth/me")
-                        )
-                        .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                new AntPathRequestMatcher("/auth/status")
-                        )
-                        .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                new AntPathRequestMatcher("/auth/logout")
-                        )
+                        .authenticationEntryPoint(authenticationEntryPoint())
+                        .accessDeniedHandler(accessDeniedHandler())
                 )
                 .build();
+    }
+
+    private AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) ->
+                writeJson(response, HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+    }
+
+    private AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            if (accessDeniedException instanceof CsrfException) {
+                writeJson(response, HttpStatus.FORBIDDEN, "CSRF 토큰이 유효하지 않습니다.");
+                return;
+            }
+            writeJson(response, HttpStatus.FORBIDDEN, "이 작업을 수행할 권한이 없습니다.");
+        };
+    }
+
+    private void writeJson(HttpServletResponse response, HttpStatus status, String message) throws IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write("{\"message\":\"" + message + "\"}");
     }
 
     private Collection<GrantedAuthority> extractKeycloakRoles(Map<String, Object> claims) {
@@ -107,6 +133,7 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(role -> !role.isBlank())
                 .map(String::toUpperCase)
+                .filter(APPLICATION_ROLES::contains)
                 .map(SecurityRoles::asAuthority)
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toCollection(LinkedHashSet::new));

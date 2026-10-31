@@ -2,9 +2,7 @@
   <section class="ops-stack">
     <div class="glass-panel ops-header">
       <div>
-        <p class="section-title mb-1">Payment Requests</p>
-        <h2 class="mb-1">결제 요청 운영</h2>
-        <p class="muted-copy mb-0">멱등키로 접수된 요청을 조회하고 상태별로 확인합니다.</p>
+        <p class="muted-copy mb-0">같은 멱등키는 한 건으로 보고, 상태별로 골라 봅니다.</p>
       </div>
       <button class="btn btn-accent px-4" type="button" @click="loadRequests">조회</button>
     </div>
@@ -15,11 +13,11 @@
           <span class="field-label">상태</span>
           <select v-model="selectedStatus" class="control-select">
             <option value="">전체</option>
-            <option v-for="status in statuses" :key="status" :value="status">{{ status }}</option>
+            <option v-for="status in statuses" :key="status" :value="status">{{ paymentStatusLabel(status) }}</option>
           </select>
         </label>
         <label>
-          <span class="field-label">요청 생성</span>
+          <span class="field-label">금액</span>
           <input v-model="newRequest.amount" class="control-input" placeholder="금액" type="number" min="1" />
         </label>
         <label>
@@ -33,7 +31,7 @@
       </div>
       <div class="action-row mt-3">
         <button class="btn btn-outline-primary" type="button" @click="createRequest">요청 등록</button>
-        <span class="muted-copy small">동일 멱등키로 재요청하면 기존 요청이 반환됩니다.</span>
+        <span class="muted-copy small">같은 멱등키와 같은 내용이면 기존 요청을 반환합니다. 내용이 다르면 등록되지 않습니다.</span>
       </div>
     </div>
 
@@ -45,12 +43,12 @@
         <table class="table-surface">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Request No</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Requested By</th>
-              <th>Created</th>
+              <th>번호</th>
+              <th>요청번호</th>
+              <th>금액</th>
+              <th>상태</th>
+              <th>요청자</th>
+              <th>접수일시</th>
               <th></th>
             </tr>
           </thead>
@@ -59,9 +57,9 @@
               <td>{{ request.id }}</td>
               <td>{{ request.requestNo }}</td>
               <td>{{ formatAmount(request.amount) }}</td>
-              <td><span :class="['status-pill', statusClass(request.status)]">{{ request.status }}</span></td>
+              <td><span :class="['status-pill', statusClass(request.status)]">{{ paymentStatusLabel(request.status) }}</span></td>
               <td>{{ request.requestedBy }}</td>
-              <td>{{ request.createdAt }}</td>
+              <td>{{ formatDateTime(request.createdAt) }}</td>
               <td>
                 <router-link :to="`/payment-requests/${request.id}`" class="btn btn-sm btn-outline-primary">
                   상세
@@ -82,8 +80,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { sessionState, startLogin } from '../auth/session'
 import { createPaymentRequest, getPaymentRequests } from '../api/paymentRequestApi'
+import { formatDateTime } from '../formatDate'
 
-const statuses = ['REQUESTED', 'APPROVED', 'REJECTED', 'PROCESSING', 'SUCCESS', 'FAILED', 'RETRYING', 'SETTLED']
+import { paymentStatusLabel, paymentStatuses } from '../labels'
+
+const statuses = paymentStatuses
 const requests = ref([])
 const selectedStatus = ref('')
 const loading = ref(false)

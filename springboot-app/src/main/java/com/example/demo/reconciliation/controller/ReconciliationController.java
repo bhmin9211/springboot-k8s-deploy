@@ -27,7 +27,7 @@ public class ReconciliationController {
 
     private final ReconciliationService reconciliationService;
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping
     public ResponseEntity<ReconciliationResultResponse> reconcile(@RequestBody ReconcileSettlementRequest request,
                                                                   Authentication authentication,
@@ -36,11 +36,13 @@ public class ReconciliationController {
                 .body(reconciliationService.reconcile(request, actor(authentication), clientIp(httpRequest)));
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping
     public ResponseEntity<List<ReconciliationResultResponse>> findAll() {
         return ResponseEntity.ok(reconciliationService.findAll());
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping("/mismatches")
     public ResponseEntity<List<ReconciliationResultResponse>> findMismatches() {
         return ResponseEntity.ok(reconciliationService.findMismatches());

@@ -2,9 +2,7 @@
   <section class="ops-stack">
     <div class="glass-panel ops-header">
       <div>
-        <p class="section-title mb-1">Reconciliations</p>
-        <h2 class="mb-1">정산 대사</h2>
-        <p class="muted-copy mb-0">내부 정산 데이터와 외부 정산 결과의 금액/상태 차이를 확인합니다.</p>
+        <p class="muted-copy mb-0">내부 정산과 외부 정산의 금액, 상태가 맞는지 비교합니다.</p>
       </div>
       <div class="action-row">
         <button class="btn btn-outline-primary" type="button" @click="loadAll">전체 조회</button>
@@ -45,16 +43,16 @@
         <table class="table-surface">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Settlement</th>
-              <th>External TRX</th>
-              <th>Internal Amount</th>
-              <th>External Amount</th>
-              <th>Internal Status</th>
-              <th>External Status</th>
-              <th>Result</th>
-              <th>Reason</th>
-              <th>Created</th>
+              <th>번호</th>
+              <th>정산</th>
+              <th>외부 거래</th>
+              <th>내부 금액</th>
+              <th>외부 금액</th>
+              <th>내부 상태</th>
+              <th>외부 상태</th>
+              <th>결과</th>
+              <th>사유</th>
+              <th>생성</th>
             </tr>
           </thead>
           <tbody>
@@ -64,11 +62,11 @@
               <td>{{ result.externalTransactionId }}</td>
               <td>{{ formatAmount(result.internalAmount) }}</td>
               <td>{{ formatAmount(result.externalAmount) }}</td>
-              <td>{{ result.internalStatus || '-' }}</td>
+              <td>{{ settlementStatusLabel(result.internalStatus) }}</td>
               <td>{{ result.externalStatus || '-' }}</td>
-              <td><span :class="['status-pill', resultClass(result.resultType)]">{{ result.resultType }}</span></td>
+              <td><span :class="['status-pill', resultClass(result.resultType)]">{{ reconciliationResultLabel(result.resultType) }}</span></td>
               <td>{{ result.mismatchReason || '-' }}</td>
-              <td>{{ result.createdAt }}</td>
+              <td>{{ formatDateTime(result.createdAt) }}</td>
             </tr>
             <tr v-if="!results.length">
               <td colspan="10" class="empty-state">대사 결과가 없습니다.</td>
@@ -84,6 +82,8 @@
 import { onMounted, ref } from 'vue'
 import { sessionState, startLogin } from '../auth/session'
 import { getMismatchReconciliations, getReconciliations, runReconciliation } from '../api/reconciliationApi'
+import { formatDateTime } from '../formatDate'
+import { reconciliationResultLabel, settlementStatusLabel } from '../labels'
 
 const results = ref([])
 const loading = ref(false)

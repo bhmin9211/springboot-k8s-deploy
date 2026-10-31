@@ -4,6 +4,7 @@ import router from './router'
 import { restoreSession } from './auth/session'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
+import './assets/styles.css'
 
 const bootstrap = async () => {
   await restoreSession()

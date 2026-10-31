@@ -2,9 +2,7 @@
   <section class="ops-stack">
     <div class="glass-panel ops-header">
       <div>
-        <p class="section-title mb-1">Settlements</p>
-        <h2 class="mb-1">정산 운영</h2>
-        <p class="muted-copy mb-0">성공 처리된 결제 요청을 기준으로 정산 데이터를 생성합니다.</p>
+        <p class="muted-copy mb-0">성공 처리된 결제 요청으로 정산을 만듭니다.</p>
       </div>
       <button class="btn btn-accent px-4" type="button" @click="loadSettlements">조회</button>
     </div>
@@ -22,7 +20,7 @@
       </div>
       <div class="action-row mt-3">
         <button class="btn btn-outline-primary" type="button" @click="generate">정산 생성</button>
-        <span class="muted-copy small">SUCCESS 상태의 결제 요청만 정산 생성이 가능합니다.</span>
+        <span class="muted-copy small">성공 처리된 결제 요청만 정산할 수 있습니다.</span>
       </div>
     </div>
 
@@ -34,15 +32,15 @@
         <table class="table-surface">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Payment ID</th>
-              <th>Gross</th>
-              <th>Fee</th>
-              <th>Settlement</th>
-              <th>Status</th>
-              <th>Due Date</th>
-              <th>Created</th>
-              <th>Updated</th>
+              <th>번호</th>
+              <th>결제 요청</th>
+              <th>거래금액</th>
+              <th>수수료</th>
+              <th>정산금액</th>
+              <th>상태</th>
+              <th>예정일</th>
+              <th>생성</th>
+              <th>수정</th>
             </tr>
           </thead>
           <tbody>
@@ -52,10 +50,10 @@
               <td>{{ formatAmount(settlement.grossAmount) }}</td>
               <td>{{ formatAmount(settlement.feeAmount) }}</td>
               <td>{{ formatAmount(settlement.settlementAmount) }}</td>
-              <td><span class="status-pill status-ok">{{ settlement.settlementStatus }}</span></td>
+              <td><span class="status-pill status-ok">{{ settlementStatusLabel(settlement.settlementStatus) }}</span></td>
               <td>{{ settlement.settlementDueDate }}</td>
-              <td>{{ settlement.createdAt }}</td>
-              <td>{{ settlement.updatedAt }}</td>
+              <td>{{ formatDateTime(settlement.createdAt) }}</td>
+              <td>{{ formatDateTime(settlement.updatedAt) }}</td>
             </tr>
             <tr v-if="!settlements.length">
               <td colspan="9" class="empty-state">정산 데이터가 없습니다.</td>
@@ -71,6 +69,8 @@
 import { onMounted, ref } from 'vue'
 import { sessionState, startLogin } from '../auth/session'
 import { generateSettlement, getSettlements } from '../api/settlementApi'
+import { formatDateTime } from '../formatDate'
+import { settlementStatusLabel } from '../labels'
 
 const settlements = ref([])
 const loading = ref(false)

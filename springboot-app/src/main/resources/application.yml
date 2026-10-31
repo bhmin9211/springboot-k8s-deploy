@@ -8,6 +8,7 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://localhost:3306/k8s_dashboard}
     username: ${SPRING_DATASOURCE_USERNAME:root}
+    # 로컬 기본값이다. 외부에서 접근 가능한 환경에서는 SPRING_DATASOURCE_PASSWORD를 지정한다.
     password: ${SPRING_DATASOURCE_PASSWORD:1234}
     driver-class-name: org.mariadb.jdbc.Driver
 
@@ -44,4 +45,4 @@ app:
   security:
     frontend-base-url: ${APP_SECURITY_FRONTEND_BASE_URL:http://localhost:3000}
   kubernetes:
-    commands-enabled: ${APP_KUBERNETES_COMMANDS_ENABLED:true}
+    commands-enabled: ${APP_KUBERNETES_COMMANDS_ENABLED:false}

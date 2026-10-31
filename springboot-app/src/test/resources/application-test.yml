@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: test-client
+            client-secret: test-secret
+
+app:
+  kubernetes:
+    commands-enabled: false
+
+logging:
+  level:
+    root: warn

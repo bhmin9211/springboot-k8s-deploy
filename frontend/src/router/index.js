@@ -10,13 +10,15 @@ import PaymentRequestDetailView from '../views/PaymentRequestDetailView.vue'
 import SettlementListView from '../views/SettlementListView.vue'
 import ReconciliationListView from '../views/ReconciliationListView.vue'
 
+const requiresAuth = { requiresAuth: true }
+
 const routes = [
   { path: '/', component: Home },
-  { path: '/payment-requests', component: PaymentRequestListView },
-  { path: '/payment-requests/:id', component: PaymentRequestDetailView },
-  { path: '/settlements', component: SettlementListView },
-  { path: '/reconciliations', component: ReconciliationListView },
-  { path: '/cluster', component: Cluster },
+  { path: '/payment-requests', component: PaymentRequestListView, meta: requiresAuth },
+  { path: '/payment-requests/:id', component: PaymentRequestDetailView, meta: requiresAuth },
+  { path: '/settlements', component: SettlementListView, meta: requiresAuth },
+  { path: '/reconciliations', component: ReconciliationListView, meta: requiresAuth },
+  { path: '/cluster', component: Cluster, meta: requiresAuth },
   { path: '/about', component: About },
   { path: '/login', component: Login }
 ]

@@ -1,16 +1,16 @@
 <template>
   <section class="about-grid">
     <div class="glass-panel about-hero">
-      <p class="section-title">Project Story</p>
-      <h2 class="about-title">GitOps 파이프라인을 눈으로 보여주는 포트폴리오</h2>
+      <p class="section-title">이 화면</p>
+      <h2 class="about-title">결제 요청이 승인되고 정산으로 넘어가는 과정을 다룹니다</h2>
       <p class="muted-copy about-copy">
-        이 프로젝트는 단순한 CRUD가 아니라, 인증, 백엔드 API, 프론트 대시보드, Kubernetes 조회,
-        Helm 배포, Argo CD 동기화를 한 서비스 흐름으로 묶는 데 초점을 맞췄습니다.
+        접수, 승인, 정산, 대사를 한 화면에서 처리합니다.
+        로그인한 사람만 업무 API를 호출하고, 클러스터 변경 명령은 설정으로 꺼 둡니다.
       </p>
     </div>
 
     <div class="glass-panel timeline-card">
-      <p class="section-title">Build Intent</p>
+      <p class="section-title">담아 둔 것</p>
       <div class="timeline-list">
         <div v-for="item in highlights" :key="item.title" class="timeline-item">
           <span class="timeline-marker">{{ item.step }}</span>
@@ -23,7 +23,7 @@
     </div>
 
     <div class="glass-panel stack-card">
-      <p class="section-title">Stack</p>
+      <p class="section-title">구성</p>
       <div class="stack-grid">
         <div v-for="stack in stacks" :key="stack.name" class="stack-item">
           <strong>{{ stack.name }}</strong>
@@ -38,109 +38,25 @@
 const highlights = [
   {
     step: '01',
-    title: 'Public Portfolio Shape',
-    text: '이력서에서 바로 열어볼 수 있는 공개 URL과 운영형 화면 구성을 목표로 정리했습니다.'
+    title: '같은 요청은 한 건',
+    text: '같은 멱등키와 같은 내용이면 기존 요청을 돌려주고, 내용이 다르면 새로 만들지 않습니다.'
   },
   {
     step: '02',
-    title: 'Read-only Kubernetes Access',
-    text: '공개 환경에서는 조회 위주로 구성하고, 명령형 API는 비활성화 가능한 구조로 안전하게 분리했습니다.'
+    title: '권한마다 할 수 있는 일이 다름',
+    text: '조회는 로그인한 사람이 하고, 승인과 정산, 상태 변경은 운영자와 관리자만 합니다.'
   },
   {
     step: '03',
-    title: 'Deploy Anywhere Configuration',
-    text: 'DB, session auth, CORS, API 주소를 환경변수화해 Render와 Vercel 배포 기준으로 맞췄습니다.'
+    title: '클러스터 명령은 기본으로 꺼 둠',
+    text: '조회는 로그인 뒤에 가능하고, 삭제나 스케일은 별도 설정이 켜져 있을 때만 실행됩니다.'
   }
 ]
 
 const stacks = [
-  { name: 'Backend', value: 'Spring Boot, Security, JPA, OAuth2 Login' },
-  { name: 'Frontend', value: 'Vue 3, Vite, Bootstrap, Axios' },
-  { name: 'Delivery', value: 'GitHub Actions, Docker, Helm, Argo CD' },
-  { name: 'Platform', value: 'Kubernetes, MariaDB, Render, Vercel' }
+  { name: '서버', value: 'Spring Boot, Security, JPA, OAuth2 Login' },
+  { name: '화면', value: 'Vue 3, Vite, Bootstrap, Axios' },
+  { name: '배포', value: 'GitHub Actions, Docker, Helm' },
+  { name: '실행 환경', value: 'Kubernetes, MariaDB, Keycloak' }
 ]
 </script>
-
-<style scoped>
-.about-grid {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.about-hero,
-.timeline-card,
-.stack-card {
-  padding: 1.5rem;
-}
-
-.about-title {
-  font-size: clamp(1.8rem, 3vw, 2.7rem);
-  margin-bottom: 1rem;
-}
-
-.about-copy {
-  max-width: 68ch;
-}
-
-.timeline-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.timeline-item {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 18px;
-  background: rgba(148, 163, 184, 0.05);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.timeline-marker {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: rgba(76, 201, 240, 0.12);
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.timeline-item h3 {
-  font-size: 1.05rem;
-  margin-bottom: 0.45rem;
-}
-
-.stack-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.stack-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: 1rem;
-  border-radius: 18px;
-  background: rgba(76, 201, 240, 0.06);
-  border: 1px solid rgba(76, 201, 240, 0.1);
-}
-
-.stack-item span {
-  color: var(--text-subtle);
-}
-
-@media (max-width: 767.98px) {
-  .stack-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .timeline-item {
-    flex-direction: column;
-  }
-}
-</style>

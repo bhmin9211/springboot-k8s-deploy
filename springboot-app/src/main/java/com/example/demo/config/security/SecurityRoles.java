@@ -9,6 +9,11 @@ public final class SecurityRoles {
     public static final String OPERATOR = "OPERATOR";
     public static final String ADMIN = "ADMIN";
 
+    public static final String HAS_VIEWER =
+            "hasAnyRole('" + VIEWER + "','" + OPERATOR + "','" + ADMIN + "')";
+    public static final String HAS_OPERATOR = "hasAnyRole('" + OPERATOR + "','" + ADMIN + "')";
+    public static final String HAS_ADMIN = "hasRole('" + ADMIN + "')";
+
     private SecurityRoles() {
     }
 

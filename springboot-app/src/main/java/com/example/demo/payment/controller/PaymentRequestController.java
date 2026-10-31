@@ -3,6 +3,7 @@ package com.example.demo.payment.controller;
 import com.example.demo.config.security.SecurityRoles;
 import com.example.demo.payment.dto.CreatePaymentRequest;
 import com.example.demo.payment.dto.FailPaymentRequest;
+import com.example.demo.payment.dto.PaymentRequestCreateResult;
 import com.example.demo.payment.dto.PaymentRequestResponse;
 import com.example.demo.payment.dto.PaymentStatusHistoryResponse;
 import com.example.demo.payment.dto.RejectPaymentRequest;
@@ -31,26 +32,30 @@ public class PaymentRequestController {
 
     private final PaymentRequestService paymentRequestService;
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping
     public ResponseEntity<PaymentRequestResponse> create(@RequestBody CreatePaymentRequest request,
                                                          Authentication authentication,
                                                          HttpServletRequest httpRequest) {
-        PaymentRequestResponse response = paymentRequestService.create(request, actor(authentication), clientIp(httpRequest));
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        PaymentRequestCreateResult result = paymentRequestService.create(
+                request, actor(authentication), clientIp(httpRequest));
+        HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(status).body(result.paymentRequest());
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping
     public ResponseEntity<List<PaymentRequestResponse>> findAll() {
         return ResponseEntity.ok(paymentRequestService.findAll());
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping("/{id}")
     public ResponseEntity<PaymentRequestResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(paymentRequestService.findById(id));
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/{id}/approve")
     public ResponseEntity<PaymentRequestResponse> approve(@PathVariable Long id,
                                                           Authentication authentication,
@@ -58,7 +63,7 @@ public class PaymentRequestController {
         return ResponseEntity.ok(paymentRequestService.approve(id, actor(authentication), clientIp(httpRequest)));
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/{id}/reject")
     public ResponseEntity<PaymentRequestResponse> reject(@PathVariable Long id,
                                                          @RequestBody RejectPaymentRequest request,
@@ -67,7 +72,7 @@ public class PaymentRequestController {
         return ResponseEntity.ok(paymentRequestService.reject(id, request.reason(), actor(authentication), clientIp(httpRequest)));
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/{id}/process")
     public ResponseEntity<PaymentRequestResponse> process(@PathVariable Long id,
                                                           Authentication authentication,
@@ -75,7 +80,7 @@ public class PaymentRequestController {
         return ResponseEntity.ok(paymentRequestService.process(id, actor(authentication), clientIp(httpRequest)));
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/{id}/success")
     public ResponseEntity<PaymentRequestResponse> succeed(@PathVariable Long id,
                                                           Authentication authentication,
@@ -83,7 +88,7 @@ public class PaymentRequestController {
         return ResponseEntity.ok(paymentRequestService.succeed(id, actor(authentication), clientIp(httpRequest)));
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/{id}/fail")
     public ResponseEntity<PaymentRequestResponse> fail(@PathVariable Long id,
                                                        @RequestBody FailPaymentRequest request,
@@ -92,7 +97,7 @@ public class PaymentRequestController {
         return ResponseEntity.ok(paymentRequestService.fail(id, request.reason(), actor(authentication), clientIp(httpRequest)));
     }
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/{id}/retry")
     public ResponseEntity<PaymentRequestResponse> retry(@PathVariable Long id,
                                                         Authentication authentication,
@@ -100,6 +105,7 @@ public class PaymentRequestController {
         return ResponseEntity.ok(paymentRequestService.retry(id, actor(authentication), clientIp(httpRequest)));
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping("/{id}/histories")
     public ResponseEntity<List<PaymentStatusHistoryResponse>> findHistories(@PathVariable Long id) {
         return ResponseEntity.ok(paymentRequestService.findHistories(id));

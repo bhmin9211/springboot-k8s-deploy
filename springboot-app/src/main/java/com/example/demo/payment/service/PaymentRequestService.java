@@ -2,6 +2,7 @@ package com.example.demo.payment.service;
 
 import com.example.demo.audit.service.AuditLogService;
 import com.example.demo.payment.dto.CreatePaymentRequest;
+import com.example.demo.payment.dto.PaymentRequestCreateResult;
 import com.example.demo.payment.dto.PaymentRequestResponse;
 import com.example.demo.payment.dto.PaymentStatusHistoryResponse;
 import com.example.demo.payment.entity.PaymentRequest;
@@ -26,18 +27,25 @@ public class PaymentRequestService {
 
     private static final String TARGET_TYPE = "PAYMENT_REQUEST";
     private static final int MAX_RETRY_COUNT = 3;
+    private static final int MAX_REQUEST_NO_ATTEMPTS = 3;
 
     private final PaymentRequestRepository paymentRequestRepository;
     private final PaymentStatusHistoryRepository statusHistoryRepository;
     private final AuditLogService auditLogService;
+    private final PaymentRequestInsertTx paymentRequestInsertTx;
 
-    @Transactional
-    public PaymentRequestResponse create(CreatePaymentRequest request, String actorId, String ipAddress) {
+    /**
+     * 이 메서드는 트랜잭션을 열어 두지 않는다.
+     * 저장은 {@link PaymentRequestInsertTx}의 새 트랜잭션에서 커밋되거나 롤백된다.
+     * 유니크 제약 위반을 같은 트랜잭션에서 잡으면 그 트랜잭션이 rollback-only가 되어
+     * 재조회 결과를 커밋할 수 없다.
+     */
+    public PaymentRequestCreateResult create(CreatePaymentRequest request, String actorId, String ipAddress) {
         validateCreateRequest(request);
 
         return paymentRequestRepository.findByIdempotencyKey(request.idempotencyKey())
-                .map(PaymentRequestResponse::from)
-                .orElseGet(() -> createNewPaymentRequest(request, actorId, ipAddress));
+                .map(existing -> replay(existing, request))
+                .orElseGet(() -> insertOrReplay(request, actorId, ipAddress));
     }
 
     @Transactional(readOnly = true)
@@ -157,37 +165,56 @@ public class PaymentRequestService {
                 .toList();
     }
 
-    private PaymentRequestResponse createNewPaymentRequest(CreatePaymentRequest request, String actorId, String ipAddress) {
-        try {
-            PaymentRequest paymentRequest = PaymentRequest.create(
-                    request.idempotencyKey(),
-                    generateRequestNo(),
-                    request.amount(),
-                    request.requestedBy()
-            );
-            PaymentRequest saved = paymentRequestRepository.saveAndFlush(paymentRequest);
-            statusHistoryRepository.save(PaymentStatusHistory.of(
-                    saved.getId(),
-                    null,
-                    saved.getStatus(),
-                    "요청 등록",
-                    actorId
-            ));
-            auditLogService.record(
-                    actorId,
-                    "CREATE",
-                    TARGET_TYPE,
-                    saved.getId(),
-                    null,
-                    statusJson(saved.getStatus()),
-                    ipAddress
-            );
-            return PaymentRequestResponse.from(saved);
-        } catch (DataIntegrityViolationException e) {
-            return paymentRequestRepository.findByIdempotencyKey(request.idempotencyKey())
-                    .map(PaymentRequestResponse::from)
-                    .orElseThrow(() -> e);
+    private PaymentRequestCreateResult insertOrReplay(CreatePaymentRequest request, String actorId, String ipAddress) {
+        DataIntegrityViolationException requestNoConflict = null;
+
+        for (int attempt = 1; attempt <= MAX_REQUEST_NO_ATTEMPTS; attempt++) {
+            try {
+                PaymentRequestResponse saved = paymentRequestInsertTx.insert(
+                        request.idempotencyKey(),
+                        generateRequestNo(),
+                        request.amount(),
+                        request.requestedBy(),
+                        actorId,
+                        ipAddress
+                );
+                return new PaymentRequestCreateResult(saved, true);
+            } catch (DataIntegrityViolationException exception) {
+                boolean idempotencyConflict = DataIntegrityConstraints.violates(
+                        exception, DataIntegrityConstraints.IDEMPOTENCY_KEY);
+                boolean requestNoViolation = DataIntegrityConstraints.violates(
+                        exception, DataIntegrityConstraints.REQUEST_NO);
+
+                if (idempotencyConflict && !requestNoViolation) {
+                    return replay(loadCommittedRequest(request.idempotencyKey()), request);
+                }
+                if (requestNoViolation && !idempotencyConflict) {
+                    requestNoConflict = exception;
+                    continue;
+                }
+                throw exception;
+            }
         }
+
+        if (requestNoConflict == null) {
+            throw new IllegalStateException("결제 요청번호 생성에 실패했습니다.");
+        }
+        throw requestNoConflict;
+    }
+
+    private PaymentRequestCreateResult replay(PaymentRequest existing, CreatePaymentRequest request) {
+        if (existing.getAmount().compareTo(request.amount()) != 0
+                || !existing.getRequestedBy().equals(request.requestedBy())) {
+            throw new IllegalStateException(
+                    "동일한 멱등키로 다른 요청 내용이 전달되었습니다. idempotencyKey=" + request.idempotencyKey());
+        }
+        return new PaymentRequestCreateResult(PaymentRequestResponse.from(existing), false);
+    }
+
+    private PaymentRequest loadCommittedRequest(String idempotencyKey) {
+        return paymentRequestRepository.findByIdempotencyKey(idempotencyKey)
+                .orElseThrow(() -> new IllegalStateException(
+                        "멱등키 충돌 이후 기존 결제 요청을 찾지 못했습니다. idempotencyKey=" + idempotencyKey));
     }
 
     private PaymentRequest getPaymentRequest(Long id) {
@@ -229,11 +256,17 @@ public class PaymentRequestService {
         if (request.idempotencyKey() == null || request.idempotencyKey().isBlank()) {
             throw new IllegalArgumentException("idempotencyKey는 필수입니다.");
         }
+        if (request.idempotencyKey().length() > 100) {
+            throw new IllegalArgumentException("idempotencyKey는 100자를 초과할 수 없습니다.");
+        }
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("amount는 0보다 커야 합니다.");
         }
         if (request.requestedBy() == null || request.requestedBy().isBlank()) {
             throw new IllegalArgumentException("requestedBy는 필수입니다.");
+        }
+        if (request.requestedBy().length() > 100) {
+            throw new IllegalArgumentException("requestedBy는 100자를 초과할 수 없습니다.");
         }
     }
 

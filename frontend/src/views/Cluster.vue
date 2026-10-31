@@ -3,25 +3,25 @@
     <div class="glass-panel filter-bar">
       <div class="filter-grid">
         <div>
-          <label class="filter-label" for="namespace">Namespace</label>
+          <label class="filter-label" for="namespace">네임스페이스</label>
           <select id="namespace" v-model="selectedNamespace" class="control-select">
-            <option value="all">All namespaces</option>
+            <option value="all">전체</option>
             <option v-for="namespace in namespaces" :key="namespace" :value="namespace">
               {{ namespace }}
             </option>
           </select>
         </div>
         <div>
-          <label class="filter-label" for="resourceType">Resource</label>
+          <label class="filter-label" for="resourceType">리소스</label>
           <select id="resourceType" v-model="resourceType" class="control-select">
-            <option value="pods">Pods</option>
-            <option value="deployments">Deployments</option>
-            <option value="services">Services</option>
+            <option value="pods">파드</option>
+            <option value="deployments">디플로이먼트</option>
+            <option value="services">서비스</option>
           </select>
         </div>
         <div>
-          <label class="filter-label" for="query">Search</label>
-          <input id="query" v-model="searchQuery" class="control-input" placeholder="api, default, ingress..." />
+          <label class="filter-label" for="query">검색</label>
+          <input id="query" v-model="searchQuery" class="control-input" placeholder="이름, 네임스페이스" />
         </div>
       </div>
     </div>
@@ -31,7 +31,7 @@
         <div class="card-head">
           <div>
             <p class="section-title mb-1">{{ resourceTitle }}</p>
-            <h3 class="mb-0">{{ filteredItems.length }} resources visible</h3>
+            <h3 class="mb-0">{{ filteredItems.length }}건</h3>
           </div>
           <span class="muted-copy">{{ accessLabel }}</span>
         </div>
@@ -40,22 +40,22 @@
           <table class="table-surface">
             <thead>
               <tr v-if="resourceType === 'pods'">
-                <th>Name</th>
-                <th>Status</th>
-                <th>Namespace</th>
-                <th>Image</th>
+                <th>이름</th>
+                <th>상태</th>
+                <th>네임스페이스</th>
+                <th>이미지</th>
               </tr>
               <tr v-else-if="resourceType === 'deployments'">
-                <th>Name</th>
-                <th>Ready</th>
-                <th>Namespace</th>
-                <th>Image</th>
+                <th>이름</th>
+                <th>준비</th>
+                <th>네임스페이스</th>
+                <th>이미지</th>
               </tr>
               <tr v-else>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Namespace</th>
-                <th>Ports</th>
+                <th>이름</th>
+                <th>종류</th>
+                <th>네임스페이스</th>
+                <th>포트</th>
               </tr>
             </thead>
             <tbody>
@@ -98,36 +98,36 @@
       </div>
 
       <aside class="glass-panel detail-panel">
-        <p class="section-title mb-1">Resource Detail</p>
+        <p class="section-title mb-1">선택한 리소스</p>
         <template v-if="selectedItem">
           <h3 class="detail-title">{{ selectedItem.name }}</h3>
           <div class="detail-list">
             <div class="detail-row">
-              <span>Namespace</span>
+              <span>네임스페이스</span>
               <strong>{{ selectedItem.namespace || '-' }}</strong>
             </div>
             <div class="detail-row">
-              <span>Status</span>
+              <span>상태</span>
               <strong>{{ selectedItem.status || selectedItem.type || '-' }}</strong>
             </div>
             <div class="detail-row">
-              <span>Image</span>
+              <span>이미지</span>
               <strong>{{ selectedItem.image || '-' }}</strong>
             </div>
             <div class="detail-row">
-              <span>Created</span>
+              <span>생성</span>
               <strong>{{ selectedItem.creationTimestamp || '-' }}</strong>
             </div>
             <div class="detail-row" v-if="resourceType === 'pods'">
-              <span>Restarts</span>
+              <span>재시작</span>
               <strong>{{ selectedItem.restartCount || '0' }}</strong>
             </div>
             <div class="detail-row" v-if="resourceType === 'deployments'">
-              <span>Replicas</span>
+              <span>복제본</span>
               <strong>{{ selectedItem.readyReplicas || 0 }}/{{ selectedItem.replicas || 0 }}</strong>
             </div>
             <div class="detail-row" v-if="resourceType === 'services'">
-              <span>Ports</span>
+              <span>포트</span>
               <strong>{{ selectedItem.ports?.join(', ') || '-' }}</strong>
             </div>
           </div>
@@ -163,26 +163,26 @@ const datasets = computed(() => ({
 
 const resourceTitle = computed(() => {
   if (resourceType.value === 'deployments') {
-    return 'Deployments'
+    return '디플로이먼트'
   }
   if (resourceType.value === 'services') {
-    return 'Services'
+    return '서비스'
   }
-  return 'Pods'
+  return '파드'
 })
 
 const accessLabel = computed(() => {
   const roles = sessionState.user?.roles || []
   if (roles.includes('ADMIN')) {
-    return 'Admin access'
+    return '관리자'
   }
   if (roles.includes('OPERATOR')) {
-    return 'Operator access'
+    return '운영자'
   }
   if (roles.includes('VIEWER')) {
-    return 'Viewer access'
+    return '조회'
   }
-  return 'Read-only explorer'
+  return '로그인 필요'
 })
 
 const filteredItems = computed(() => {
@@ -238,71 +238,3 @@ watch([resourceType, selectedNamespace, searchQuery], () => {
 
 onMounted(loadClusterData)
 </script>
-
-<style scoped>
-.cluster-layout {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.filter-bar,
-.list-panel,
-.detail-panel {
-  padding: 1.25rem;
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.filter-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-subtle);
-  font-size: 0.84rem;
-}
-
-.cluster-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(290px, 0.8fr);
-  gap: 1.25rem;
-}
-
-.clickable-row {
-  cursor: pointer;
-}
-
-.clickable-row:hover {
-  background: rgba(14, 165, 233, 0.08);
-}
-
-.detail-title {
-  margin-bottom: 1rem;
-}
-
-.detail-list {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-}
-
-.detail-row span {
-  color: var(--text-subtle);
-}
-
-@media (max-width: 991.98px) {
-  .filter-grid,
-  .cluster-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

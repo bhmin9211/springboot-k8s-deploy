@@ -28,7 +28,7 @@ public class SettlementController {
 
     private final SettlementService settlementService;
 
-    @PreAuthorize("hasAnyRole('" + SecurityRoles.OPERATOR + "','" + SecurityRoles.ADMIN + "')")
+    @PreAuthorize(SecurityRoles.HAS_OPERATOR)
     @PostMapping("/generate")
     public ResponseEntity<SettlementResponse> generate(@RequestBody GenerateSettlementRequest request,
                                                        Authentication authentication,
@@ -37,11 +37,13 @@ public class SettlementController {
                 .body(settlementService.generate(request, actor(authentication), clientIp(httpRequest)));
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping
     public ResponseEntity<List<SettlementResponse>> findAll() {
         return ResponseEntity.ok(settlementService.findAll());
     }
 
+    @PreAuthorize(SecurityRoles.HAS_VIEWER)
     @GetMapping("/{id}")
     public ResponseEntity<SettlementResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(settlementService.findById(id));

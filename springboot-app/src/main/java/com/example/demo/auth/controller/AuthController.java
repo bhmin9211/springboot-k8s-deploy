@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -112,8 +113,23 @@ public class AuthController {
         return ResponseEntity.ok("인증 서비스가 정상적으로 동작하고 있습니다.");
     }
 
+    @GetMapping("/csrf")
+    public Map<String, String> csrf(CsrfToken csrfToken) {
+        return Map.of(
+                "headerName", csrfToken.getHeaderName(),
+                "parameterName", csrfToken.getParameterName(),
+                "token", csrfToken.getToken()
+        );
+    }
+
     private String sanitizeRedirect(String redirect) {
-        if (redirect == null || redirect.isBlank() || !redirect.startsWith("/")) {
+        if (redirect == null
+                || redirect.isBlank()
+                || !redirect.startsWith("/")
+                || redirect.startsWith("//")
+                || redirect.contains("://")
+                || redirect.contains("\\")
+                || redirect.chars().anyMatch(Character::isWhitespace)) {
             return "/";
         }
         return redirect;
